@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ワイガヤJリーグ</title>
+<style>
+:root {
+  --primary: #1976D2;
+  --primary-light: #42A5F5;
+  --primary-dark: #0D47A1;
+  --tile: #3D9BE9;
+  --bg: #EEF4FC;
+  --text: #1A2236;
+  --text2: #6B7A99;
+  --border: #D0DCF0;
+  --shadow: 0 2px 14px rgba(25,118,210,0.10);
+  --shadow-tile: 0 4px 18px rgba(25,118,210,0.22);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); overscroll-behavior: none; }
+#app { max-width: 480px; margin: 0 auto; min-height: 100%; background: var(--bg); }
+
+/* ── HEADER ── */
+.header { background: linear-gradient(135deg, #1565C0 0%, #1976D2 60%, #2196F3 100%); color: white; padding: 14px 16px 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(21,101,192,0.3); }
+.header h1 { font-size: 18px; font-weight: 800; letter-spacing: 0.3px; }
+.header-row { display: flex; align-items: center; justify-content: space-between; }
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-logo { width: 42px; height: 42px; border-radius: 10px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.18); font-size: 24px; backdrop-filter: blur(4px); }
+.header-logo img { width: 100%; height: 100%; object-fit: contain; }
+.header-sub { font-size: 11px; opacity: 0.75; margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 6px; }
+.btn-ghost { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.25); color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; white-space: nowrap; backdrop-filter: blur(4px); }
+.btn-back { background: none; border: none; color: white; font-size: 26px; cursor: pointer; padding: 0 8px 0 0; line-height: 1; }
+.sync-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: white; width: 36px; height: 36px; border-radius: 10px; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: white; border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -2px 12px rgba(25,118,210,0.08); }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 8px; cursor: pointer; color: var(--text2); font-size: 11px; gap: 3px; border: none; background: none; font-weight: 500; }
+.nav-btn.active { color: var(--primary); font-weight: 700; }
+.nav-btn.active .nav-icon { filter: drop-shadow(0 0 4px rgba(25,118,210,0.4)); }
+.nav-icon { font-size: 22px; line-height: 1; }
+
+/* ── CONTENT & CARDS ── */
+.content { padding: 14px; padding-bottom: 90px; }
+.card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.card-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--primary-dark); }
+
+/* ── QUICK TILES (ホーム画面) ── */
+.tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+.tile { background: linear-gradient(135deg, #3D9BE9 0%, #1976D2 100%); border-radius: 18px; padding: 20px 12px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; box-shadow: var(--shadow-tile); border: none; -webkit-user-select: none; transition: transform .12s, box-shadow .12s; }
+.tile:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(25,118,210,0.18); }
+.tile-icon { font-size: 36px; line-height: 1; }
+.tile-label { font-size: 14px; font-weight: 700; color: white; text-align: center; letter-spacing: 0.3px; }
+.tile-sub { font-size: 11px; color: rgba(255,255,255,0.75); text-align: center; }
+.tile-wide { grid-column: 1 / -1; padding: 16px 20px; flex-direction: row; justify-content: center; gap: 14px; }
+.tile-wide .tile-icon { font-size: 28px; }
+
+/* ── HOME HEADER HERO ── */
+.home-hero { background: linear-gradient(135deg, #1565C0 0%, #1976D2 60%, #2196F3 100%); padding: 20px 16px 28px; color: white; }
+.home-hero-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.home-hero-logo-img { width: 48px; height: 48px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.18); font-size: 28px; }
+.home-hero-logo-img img { width: 100%; height: 100%; object-fit: contain; }
+.home-hero-title { font-size: 22px; font-weight: 900; letter-spacing: 0.5px; }
+.home-hero-sub { font-size: 12px; opacity: 0.75; margin-top: 3px; }
+.home-hero-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.home-content { padding: 14px; padding-bottom: 90px; margin-top: -14px; }
+
+/* ── SECTION LABEL ── */
+.section-label { font-size: 13px; font-weight: 700; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 10px; padding-left: 2px; }
+
+/* ── ROUND CARDS ── */
+.round-card { background: white; border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 12px; -webkit-user-select: none; border-left: 4px solid var(--primary-light); transition: box-shadow .15s; }
+.round-card:active { box-shadow: 0 1px 4px rgba(25,118,210,0.1); opacity: 0.85; }
+.round-info { flex: 1; min-width: 0; }
+.round-title-tag { font-size: 11px; font-weight: 700; color: var(--primary); background: #E3F2FD; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-bottom: 3px; }
+.round-date { font-size: 12px; color: var(--text2); }
+.round-course { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.round-meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.round-arrow { color: var(--primary-light); font-size: 20px; font-weight: 300; }
+
+/* ── BUTTONS ── */
+.btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 13px 20px; border-radius: 12px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; transition: opacity .15s, transform .1s; }
+.btn:active { opacity: 0.78; transform: scale(0.98); }
+.btn-primary { background: linear-gradient(135deg, #1976D2, #1565C0); color: white; box-shadow: 0 3px 10px rgba(25,118,210,0.35); }
+.btn-outline { background: white; color: var(--primary); border: 1.5px solid var(--primary); }
+.btn-red { background: #FFF0F0; color: #C62828; border: 1.5px solid #FFCDD2; }
+.btn-gray { background: #F4F6FB; color: #555; border: 1.5px solid var(--border); }
+.btn-sm { padding: 7px 14px; font-size: 13px; width: auto; border-radius: 10px; }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; }
+.form-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 15px; background: white; color: var(--text); -webkit-appearance: none; transition: border-color .15s; }
+.form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(25,118,210,0.1); }
+.form-input-sm { font-size: 12px; padding: 10px 12px; }
+
+/* ── MEDALS ── */
+.medal { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+.medal-WC { background: linear-gradient(135deg, #FFD700, #FF8C00); color: white; box-shadow: 0 2px 8px rgba(255,140,0,0.45); }
+.medal-J1 { background: #FFD700; color: #5D4037; }
+.medal-J2 { background: #C0C0C0; color: #333; }
+.medal-J3 { background: #CD7F32; color: white; }
+.medal-none { background: #EEF2FA; color: #aaa; font-size: 20px; font-weight: 400; }
+.medal-sm { width: 26px; height: 26px; font-size: 9px; }
+
+/* ── RESULT / SCORE ROWS ── */
+.result-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #EEF2FA; }
+.result-row:last-child { border-bottom: none; }
+.rank-num { font-size: 18px; font-weight: 800; width: 28px; text-align: center; color: var(--primary); }
+.result-name { flex: 1; font-size: 15px; font-weight: 600; }
+.result-score { font-size: 16px; font-weight: 700; color: var(--text2); }
+
+.score-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #EEF2FA; }
+.score-row:last-child { border-bottom: none; }
+.score-name { flex: 1; font-size: 15px; font-weight: 600; }
+.score-input { width: 76px; padding: 9px 0; border: 1.5px solid var(--border); border-radius: 12px; font-size: 20px; font-weight: 700; text-align: center; -webkit-appearance: none; }
+.score-input:focus { outline: none; border-color: var(--primary); }
+
+/* ── CHECKBOXES ── */
+.check-item { display: flex; align-items: center; padding: 11px 0; border-bottom: 1px solid #EEF2FA; cursor: pointer; gap: 12px; }
+.check-item:last-child { border-bottom: none; }
+.check-item input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+.check-label { font-size: 16px; font-weight: 500; cursor: pointer; flex: 1; }
+
+/* ── MEDAL COUNT ── */
+.medal-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.medal-row:last-child { margin-bottom: 0; }
+.medal-label { flex: 1; font-size: 15px; font-weight: 600; }
+.medal-count-wrap { display: flex; align-items: center; gap: 6px; }
+.medal-count-btn { width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid var(--border); background: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: 700; }
+.medal-count-val { width: 40px; text-align: center; font-size: 18px; font-weight: 700; }
+
+/* ── STATS TABLE ── */
+.stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.stats-table th { background: linear-gradient(135deg, #1565C0, #1976D2); color: white; padding: 10px 4px; text-align: center; font-size: 11px; font-weight: 600; }
+.stats-table th:first-child { text-align: left; padding-left: 8px; border-radius: 8px 0 0 0; }
+.stats-table th:last-child { border-radius: 0 8px 0 0; }
+.stats-table td { padding: 10px 4px; text-align: center; border-bottom: 1px solid #EEF2FA; vertical-align: middle; }
+.stats-table td:first-child { text-align: left; padding-left: 8px; font-weight: 600; }
+.stats-table tr:last-child td { border-bottom: none; }
+.stats-table tr:nth-child(even) td { background: #F7FAFF; }
+.wc-val { color: #E65100; font-weight: 700; }
+.stats-table tr:hover td { background: #EEF5FF; cursor: pointer; }
+.countdown-card { background: linear-gradient(135deg,#1565C0,#1976D2); color: white; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; text-align: center; }
+.countdown-days { font-size: 40px; font-weight: 700; line-height: 1; }
+.player-stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; text-align: center; }
+.player-stat-val { font-size: 22px; font-weight: 700; }
+.player-stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+
+/* ── PLAYER ROWS ── */
+.player-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #EEF2FA; gap: 8px; }
+.player-row:last-child { border-bottom: none; }
+.player-edit-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #EEF2FA; gap: 8px; }
+.player-edit-row:last-child { border-bottom: none; }
+.player-info { flex: 1; min-width: 0; }
+.player-name-row { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.player-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ── WIZARD STEPS ── */
+.step-wrap { text-align: center; margin-bottom: 16px; }
+.step-dots { display: flex; justify-content: center; gap: 7px; margin-bottom: 6px; }
+.step-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border); }
+.step-dot.done { background: var(--primary-light); }
+.step-dot.active { background: var(--primary); transform: scale(1.2); }
+.step-label { font-size: 13px; color: var(--text2); }
+
+/* ── MISC ── */
+.empty-state { text-align: center; padding: 48px 24px; color: var(--text2); }
+.empty-icon { font-size: 52px; margin-bottom: 14px; }
+.empty-msg { font-size: 15px; margin-bottom: 6px; font-weight: 600; }
+.empty-sub { font-size: 13px; }
+.fab { position: fixed; bottom: 82px; right: 18px; width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #42A5F5, #1565C0); color: white; border: none; font-size: 30px; cursor: pointer; box-shadow: 0 4px 18px rgba(25,118,210,0.45); display: flex; align-items: center; justify-content: center; z-index: 99; transition: transform .15s; }
+.fab:active { transform: scale(0.92); }
+.alert { padding: 11px 14px; border-radius: 12px; margin-bottom: 12px; font-size: 13px; line-height: 1.6; }
+.alert-info  { background: #E3F2FD; color: #1565C0; }
+.alert-warn  { background: #FFF3E0; color: #BF360C; }
+.alert-green { background: #E8F5E9; color: #1B5E20; }
+.text-sm { font-size: 13px; color: var(--text2); }
+.text-xs { font-size: 12px; color: var(--text2); }
+.mt10 { margin-top: 10px; }
+.draft-banner { background: #FFF8E1; border: 1.5px solid #FFD54F; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+.draft-banner-title { font-size: 14px; font-weight: 700; color: #E65100; margin-bottom: 6px; }
+.draft-banner-info  { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+.draft-btns { display: flex; gap: 8px; }
+.draft-btns .btn { font-size: 14px; padding: 10px; }
+
+/* ── SYNC BAR ── */
+.sync-bar { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 12px; margin-bottom: 12px; font-size: 13px; font-weight: 600; }
+.sync-bar-ok    { background: #E8F5E9; color: #1B5E20; }
+.sync-bar-err   { background: #FFEBEE; color: #C62828; }
+.sync-bar-ing   { background: #E3F2FD; color: #1565C0; }
+.sync-bar-none  { background: #EEF4FC; color: #5C7AAA; }
+
+.toast { position: fixed; top: 72px; left: 50%; transform: translateX(-50%); background: #1565C0; color: white; padding: 10px 22px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 300; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 14px rgba(21,101,192,0.4); }
+.toast.show { opacity: 1; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinning { display: inline-block; animation: spin 1s linear infinite; }
+
+/* ── 組み合わせ表 ── */
+.pairing-group-card { background: #EEF4FC; border: 1.5px solid #90CAF9; border-radius: 14px; padding: 13px 13px 10px; margin-bottom: 10px; }
+.pairing-time-row { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; }
+.pairing-time-input { flex: 1; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--primary-dark); background: white; -webkit-appearance: none; }
+.pairing-time-input:focus { outline: none; border-color: var(--primary); }
+.pairing-group-del { background: none; border: none; color: #bbb; font-size: 13px; cursor: pointer; padding: 4px 0; white-space: nowrap; }
+.p-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
+.p-chip { display: inline-flex; align-items: center; gap: 4px; background: white; border: 1.5px solid #90CAF9; border-radius: 20px; padding: 5px 10px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.p-chip-rm { background: none; border: none; color: #aaa; font-size: 16px; cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; }
+.add-pool { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #90CAF9; }
+.pool-btn { background: #E3F2FD; border: 1.5px solid #64B5F6; border-radius: 20px; padding: 5px 12px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--primary-dark); -webkit-tap-highlight-color: transparent; }
+.pool-btn:active { background: #BBDEFB; }
+
+/* ── OCR パネル ── */
+.ocr-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; display: flex; align-items: flex-end; padding-bottom: env(safe-area-inset-bottom); }
+.ocr-panel { background: white; border-radius: 22px 22px 0 0; padding: 20px 16px; width: 100%; max-width: 480px; margin: 0 auto; max-height: 82vh; overflow-y: auto; }
+.ocr-panel-title { font-size: 17px; font-weight: 800; margin-bottom: 4px; color: var(--primary-dark); }
+.ocr-panel-sub { font-size: 12px; color: var(--text2); margin-bottom: 14px; }
+.ocr-match-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #EEF2FA; }
+.ocr-match-row:last-of-type { border-bottom: none; }
+.ocr-badge { font-size: 11px; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+.ocr-badge-ok  { background: #E3F2FD; color: var(--primary); }
+.ocr-badge-ng  { background: #F5F5F5; color: #aaa; }
+.pairing-view-row { display: flex; align-items: baseline; gap: 10px; padding: 9px 0; border-bottom: 1px solid #F0F4F0; }
+.pairing-view-row:last-child { border-bottom: none; }
+.pairing-view-time { font-size: 12px; font-weight: 700; color: var(--primary); white-space: nowrap; min-width: 52px; }
+.pairing-view-names { font-size: 14px; font-weight: 600; line-height: 1.7; flex: 1; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+// =============================================
+//  STORAGE KEYS
+// =============================================
+const DB_KEY    = 'waigaya_v1';
+const DRAFT_KEY = 'waigaya_draft_v1';
+const MEDAL_KEY = 'waigaya_lastmedal_v1';
+const LOGO_KEY  = 'waigaya_logo_v1';
+const FB_KEY    = 'waigaya_firebase_url';
+
+// =============================================
+//  STORAGE HELPERS
+// =============================================
+const jget = (k,d) => { try { const v=localStorage.getItem(k); return v?JSON.parse(v):d; } catch(e){return d;} };
+const jset = (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch(e){} };
+const ldel = (k)   => { try { localStorage.removeItem(k); } catch(e){} };
+const lget = (k)   => { try { return localStorage.getItem(k)||''; } catch(e){return '';} };
+const lset = (k,v) => { try { localStorage.setItem(k,v); } catch(e){} };
+
+const loadDB    = ()    => jget(DB_KEY, {players:[],rounds:[]});
+const saveLocal = (d)   => jset(DB_KEY, d);
+const loadDraft = ()    => jget(DRAFT_KEY, null);
+const saveDraft = (nr,s)=> jset(DRAFT_KEY, {nr,step:s});
+const clearDraft= ()    => ldel(DRAFT_KEY);
+const loadMedal = ()    => jget(MEDAL_KEY, {j1:3,j2:3,j3:3});
+const saveMedal = (m)   => jset(MEDAL_KEY, m);
+const loadLogo  = ()    => lget(LOGO_KEY);
+const saveLogo  = (v)   => lset(LOGO_KEY, v);
+const loadFbUrl = ()    => lget(FB_KEY);
+const saveFbUrl = (v)   => lset(FB_KEY, v.trim());
+
+// ★ FirebaseのURLをここに固定（全端末で自動接続）
+const DEFAULT_FB_URL = 'https://waigayaleague-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+let db       = loadDB();
+let logoUrl  = loadLogo();
+let fbUrl    = loadFbUrl() || DEFAULT_FB_URL;
+if (!loadFbUrl()) saveFbUrl(DEFAULT_FB_URL); // 未設定端末に自動セット
+let syncSt   = 'none'; // none | syncing | ok | error
+
+// =============================================
+//  FIREBASE SYNC
+// =============================================
+function fbEndpoint() {
+  if (!fbUrl) return null;
+  const base = fbUrl.replace(/\/+$/, '');
+  return `${base}/waigaya_data.json`;
+}
+
+async function fbPull(silent) {
+  const ep = fbEndpoint();
+  if (!ep) return;
+  syncSt = 'syncing'; if (!silent) updateSyncUI();
+  try {
+    const res = await fetch(ep);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    if (data && Array.isArray(data.players) && Array.isArray(data.rounds)) {
+      db = data;
+      saveLocal(db);
+      syncSt = 'ok';
+      render();
+      if (!silent) showToast('☁️ 同期しました！');
+    } else if (data === null) {
+      // Empty DB on Firebase — push local data up
+      await fbPush(true);
+      syncSt = 'ok';
+    } else {
+      syncSt = 'ok';
+    }
+  } catch(e) {
+    syncSt = 'error';
+    if (!silent) showToast('⚠️ 同期に失敗しました');
+  }
+  updateSyncUI();
+}
+
+async function fbPush(silent) {
+  const ep = fbEndpoint();
+  if (!ep) return;
+  syncSt = 'syncing'; updateSyncUI();
+  try {
+    const res = await fetch(ep, {
+      method: 'PUT',
+      body: JSON.stringify(db),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error(res.status);
+    syncSt = 'ok';
+  } catch(e) {
+    syncSt = 'error';
+  }
+  updateSyncUI();
+}
+
+function updateSyncUI() {
+  const el = document.getElementById('syncIcon');
+  if (!el) return;
+  if (!fbUrl)           { el.textContent = '☁️'; el.title = 'クラウド未設定'; return; }
+  if (syncSt==='syncing') { el.innerHTML = '<span class="spinning">🔄</span>'; el.title = '同期中…'; return; }
+  if (syncSt==='ok')      { el.textContent = '✅'; el.title = '同期済み'; return; }
+  if (syncSt==='error')   { el.textContent = '⚠️'; el.title = '同期エラー'; return; }
+  el.textContent = '☁️'; el.title = 'クラウド設定済み';
+}
+
+function saveDB(d) {
+  saveLocal(d);
+  fbPush(true);
+}
+
+// =============================================
+//  UTILS
+// =============================================
+const uid  = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+// confirm()の代わりに「2回タップで実行」方式
+const _safeTs = {};
+function safeAct(key, action, msg) {
+  const now = Date.now();
+  if (_safeTs[key] && now - _safeTs[key] < 3000) {
+    delete _safeTs[key]; action();
+  } else {
+    _safeTs[key] = now;
+    showToast(msg || '⚠️ もう一度タップすると削除されます');
+  }
+}
+const esc  = s  => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const today= ()  => new Date().toISOString().slice(0,10);
+const pname= id  => { const p=db.players.find(p=>p.id===id); return p?p.name:'?'; };
+
+function prevRank(pid, prev) {
+  if (!prev) return Infinity;
+  const r = prev.find(r=>r.playerId===pid);
+  return r ? r.rank : Infinity;
+}
+function lastRoundResults(excId) {
+  const s=[...db.rounds].filter(r=>r.id!==excId).sort((a,b)=>b.date.localeCompare(a.date));
+  return s.length>0 ? s[0].results : null;
+}
+function showToast(msg) {
+  const t=document.getElementById('toast'); if(!t)return;
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// =============================================
+//  RANKING ENGINE
+// =============================================
+function calcResults(parts, cfg, prev) {
+  const sorted=[...parts].sort((a,b)=>{
+    if (a.score!==b.score) return a.score-b.score;
+    return prevRank(a.playerId,prev)-prevRank(b.playerId,prev);
+  });
+  const ranked=[];
+  for (let i=0; i<sorted.length; i++) {
+    if (i===0) { ranked.push({...sorted[i], rank:1}); continue; }
+    const c=sorted[i], p=sorted[i-1];
+    const rc=prevRank(c.playerId,prev), rp=prevRank(p.playerId,prev);
+    ranked.push({...c, rank: (c.score===p.score && rc===rp) ? ranked[i-1].rank : i+1});
+  }
+  const {j1=0,j2=0,j3=0}=cfg;
+  return ranked.map(p=>({...p, medal:
+    p.rank===1?'WC':p.rank<=1+j1?'J1':p.rank<=1+j1+j2?'J2':p.rank<=1+j1+j2+j3?'J3':null
+  }));
+}
+
+// =============================================
+//  STATS
+// =============================================
+function stats(pid) {
+  const rs=db.rounds.filter(r=>r.results.some(x=>x.playerId===pid));
+  const res=rs.map(r=>r.results.find(x=>x.playerId===pid)).filter(Boolean);
+  const n=res.length, wc=res.filter(r=>r.medal==='WC').length,
+        j1=res.filter(r=>r.medal==='J1').length, j2=res.filter(r=>r.medal==='J2').length,
+        j3=res.filter(r=>r.medal==='J3').length;
+  const sc=res.map(r=>r.score).filter(s=>s!=null&&!isNaN(s));
+  const avg=sc.length?(sc.reduce((a,b)=>a+b,0)/sc.length).toFixed(1):'-';
+  return {n,wc,j1,j2,j3,avg};
+}
+
+function holdMedal(pid) {
+  const all=[...db.rounds].sort((a,b)=>b.date.localeCompare(a.date));
+  if (!all.length) return null;
+  const r2=all.slice(0,2);
+  if (r2.length>=2 && !r2.some(r=>r.results.some(x=>x.playerId===pid))) return null;
+  const last=all.find(r=>r.results.some(x=>x.playerId===pid));
+  return last?(last.results.find(x=>x.playerId===pid)?.medal||null):null;
+}
+
+function mb(medal, sm) {
+  const c=sm?'medal medal-sm':'medal';
+  if (!medal) return `<span class="${c} medal-none">—</span>`;
+  return `<span class="${c} medal-${medal}">${medal}</span>`;
+}
+function logoHtml() {
+  return `<div class="header-logo">${logoUrl?`<img src="${logoUrl}" />`:'⛳'}</div>`;
+}
+function syncStatusBar() {
+  if (!fbUrl) return '';
+  const map = {
+    none:    ['sync-bar-none',  '☁️',  'クラウド接続済み（未同期）'],
+    syncing: ['sync-bar-ing',   '🔄', '同期中…'],
+    ok:      ['sync-bar-ok',    '✅',  '全デバイスと同期済み'],
+    error:   ['sync-bar-err',   '⚠️', 'クラウド同期に失敗しました。URLを確認してください。'],
+  };
+  const [cls,icon,msg] = map[syncSt]||map.none;
+  return `<div class="sync-bar ${cls}">${icon} ${msg}</div>`;
+}
+
+// =============================================
+//  SCORE CHART (SVG)
+// =============================================
+function drawScoreChart(scores) {
+  if (scores.length < 2) return scores.length===1
+    ? `<div style="text-align:center;padding:20px;font-size:24px;font-weight:700;">${scores[0].score}打</div>`
+    : `<div style="text-align:center;padding:20px;color:#bbb;">データなし</div>`;
+  const W=320, H=160, PL=32, PR=14, PT=18, PB=28;
+  const cW=W-PL-PR, cH=H-PT-PB;
+  const vals=scores.map(s=>s.score);
+  const minV=Math.min(...vals), maxV=Math.max(...vals);
+  const span=maxV-minV||10;
+  const lo=minV-span*0.2, hi=maxV+span*0.2;
+  const cx=i=>PL+(i/(scores.length-1))*cW;
+  const cy=v=>PT+((hi-v)/(hi-lo))*cH;
+  const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+  const mcolor={WC:'#E65100',J1:'#1565C0',J2:'#388E3C',J3:'#6D4C41'};
+  const poly=scores.map((s,i)=>`${cx(i)},${cy(s.score)}`).join(' ');
+  const dots=scores.map((s,i)=>{
+    const c=mcolor[s.medal]||'#1976D2';
+    return `<circle cx="${cx(i)}" cy="${cy(s.score)}" r="5" fill="${c}" stroke="white" stroke-width="2"/>
+            <text x="${cx(i)}" y="${cy(s.score)-9}" text-anchor="middle" font-size="9" fill="#444">${s.score}</text>`;
+  }).join('');
+  const xLabels=scores.map((s,i)=>{
+    const d=s.date.slice(5).replace('-','/');
+    return `<text x="${cx(i)}" y="${H-6}" text-anchor="middle" font-size="9" fill="#999">${d}</text>`;
+  }).join('');
+  const yLines=[0,0.5,1].map(t=>{
+    const v=Math.round(lo+t*(hi-lo));
+    const y=cy(v);
+    return `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#f0f0f0" stroke-width="1"/>
+            <text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="#aaa">${v}</text>`;
+  }).join('');
+  const avgY=cy(avg);
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-height:180px;">
+    ${yLines}
+    <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${H-PB}" stroke="#ddd" stroke-width="1"/>
+    <line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="#ddd" stroke-width="1"/>
+    <line x1="${PL}" y1="${avgY}" x2="${W-PR}" y2="${avgY}" stroke="#FF9800" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="${W-PR-2}" y="${avgY-4}" text-anchor="end" font-size="8" fill="#FF9800">平均${avg.toFixed(1)}</text>
+    <polyline points="${poly}" fill="none" stroke="#1976D2" stroke-width="2.5" stroke-linejoin="round"/>
+    ${dots}${xLabels}
+  </svg>`;
+}
+
+// =============================================
+//  SCREEN: PLAYER STAT（個人成績ページ）
+// =============================================
+function renderPlayerStat() {
+  const pid=ui.viewId;
+  const player=db.players.find(p=>p.id===pid);
+  if (!player) return `<div class="content"><div class="empty-state"><div class="empty-msg">データなし</div></div></div>`;
+  const s=stats(pid), hm=holdMedal(pid);
+  const rounds=[...db.rounds].filter(r=>r.results.some(x=>x.playerId===pid)).sort((a,b)=>a.date.localeCompare(b.date));
+  const hist=rounds.map(r=>{const x=r.results.find(x=>x.playerId===pid);return{date:r.date,score:x.score,medal:x.medal,course:r.title||r.course};}).filter(x=>x.score!=null);
+  const sc=hist.map(x=>x.score);
+  const best=sc.length?Math.min(...sc):'-', worst=sc.length?Math.max(...sc):'-';
+  const medals=[
+    {k:'WC',e:'🏆',c:'#E65100',bg:'#FFF3E0',n:s.wc},
+    {k:'J1',e:'🥇',c:'#1565C0',bg:'#E3F2FD',n:s.j1},
+    {k:'J2',e:'🥈',c:'#2E7D32',bg:'#E8F5E9',n:s.j2},
+    {k:'J3',e:'🥉',c:'#4E342E',bg:'#EFEBE9',n:s.j3},
+  ].filter(m=>m.n>0);
+  const recentRows=[...hist].reverse().slice(0,10).map(x=>`
+    <div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">
+      <span style="color:#999;width:48px;flex-shrink:0;">${x.date.slice(5).replace('-','/')}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 8px;">${esc(x.course)}</span>
+      <span style="font-weight:700;width:40px;text-align:right;">${x.score}打</span>
+      <span style="margin-left:8px;width:30px;text-align:center;">${mb(x.medal,true)}</span>
+    </div>`).join('');
+  return `
+    <div class="header"><div class="header-row">
+      <button class="btn-back" onclick="go('stats')">‹</button>
+      <h1>${esc(player.name)}</h1>
+      <div style="width:40px;"></div>
+    </div></div>
+    <div class="content">
+      <div class="card">
+        <div class="player-stat-grid">
+          <div><div class="player-stat-label">ラウンド</div><div class="player-stat-val">${s.n}</div></div>
+          <div><div class="player-stat-label">平均</div><div class="player-stat-val">${s.avg}</div></div>
+          <div><div class="player-stat-label">ベスト</div><div class="player-stat-val" style="color:#1565C0;">${best}</div></div>
+          <div><div class="player-stat-label">ワースト</div><div class="player-stat-val" style="color:#c62828;">${worst}</div></div>
+        </div>
+        ${medals.length?`<div style="display:flex;gap:6px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
+          ${medals.map(m=>`<span style="background:${m.bg};color:${m.c};padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;">${m.e}${m.k}×${m.n}</span>`).join('')}
+          ${hm?`<span style="background:#f0f0f0;padding:5px 12px;border-radius:20px;font-size:12px;">保持中:${mb(hm,true)}</span>`:''}
+        </div>`:''}
+      </div>
+      ${hist.length>=2?`<div class="card"><div class="card-title">📈 スコア推移</div>${drawScoreChart(hist)}<div style="margin-top:6px;font-size:10px;color:#aaa;text-align:right;">点の色: 🏆WC 🥇J1 🥈J2 🥉J3　---平均</div></div>`:''}
+      <div class="card">
+        <div class="card-title">📋 ラウンド履歴</div>
+        ${recentRows||'<div style="color:#bbb;text-align:center;padding:12px;">データなし</div>'}
+      </div>
+    </div>`;
+}
+
+// =============================================
+//  SHARE RESULT
+// =============================================
+function shareResult(rid) {
+  const r=db.rounds.find(x=>x.id===rid); if (!r) return;
+  const sorted=[...r.results].sort((a,b)=>a.rank-b.rank);
+  const mText={WC:'🏆WC',J1:'🥇J1',J2:'🥈J2',J3:'🥉J3'};
+  const avg=(sorted.reduce((s,x)=>s+Number(x.score),0)/sorted.length).toFixed(1);
+  const lines=[
+    `⛳ ${r.title?r.title+' ':''}${r.course}`,
+    `📅 ${r.date.replace(/-/g,'/')}　${r.results.length}名参加`,
+    `${'─'.repeat(16)}`,
+    ...sorted.map(x=>`${x.rank}位　${pname(x.playerId)}　${x.score}打　${mText[x.medal]||''}`),
+    `${'─'.repeat(16)}`,
+    `平均スコア: ${avg}打`
+  ];
+  const text=lines.join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(()=>showToast('📋 コピーしました！LINEに貼り付けてください'));
+  } else {
+    const ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('📋 コピーしました！LINEに貼り付けてください');
+  }
+}
+
+// =============================================
+//  NEXT EVENT
+// =============================================
+function saveNextEvent() {
+  const title=document.getElementById('nextEventTitle')?.value.trim()||'';
+  const date=document.getElementById('nextEventDate')?.value||'';
+  if (!date){showToast('⚠️ 日付を入力してください');return;}
+  db.nextEvent={title,date}; saveDB(db);
+  if (fbUrl) fbPush();
+  showToast('✅ 次回大会を登録しました！'); render();
+}
+function clearNextEvent() {
+  db.nextEvent=null; saveDB(db);
+  if (fbUrl) fbPush();
+  render();
+}
+
+// =============================================
+//  SCREEN: HOME
+// =============================================
+function renderHome() {
+  const rounds=[...db.rounds].sort((a,b)=>b.date.localeCompare(a.date));
+  const draft=loadDraft();
+  const draftBanner=(draft&&draft.nr&&draft.nr.course)?`
+    <div class="draft-banner">
+      <div class="draft-banner-title">⏸ 入力途中のラウンドがあります</div>
+      <div class="draft-banner-info">${draft.nr.title?esc(draft.nr.title)+' ':''}${esc(draft.nr.course)}（${(draft.nr.date||'').replace(/-/g,'/')}）</div>
+      <div class="draft-btns">
+        <button class="btn btn-primary" onclick="resumeDraft()">続きから入力</button>
+        <button class="btn btn-gray"    onclick="clearDraft();render()">破棄する</button>
+      </div>
+    </div>`:'';
+  const roundList=rounds.length===0
+    ?`<div class="empty-state"><div class="empty-icon">⛳</div><div class="empty-msg">まだラウンドがありません</div><div class="empty-sub">下の「＋ 新しいラウンド」から追加しよう！</div></div>`
+    :rounds.map(r=>{
+      const wc=r.results.find(x=>x.medal==='WC');
+      return `<div class="round-card" onclick="go('detail','${r.id}')">
+        <div class="round-info">
+          ${r.title?`<span class="round-title-tag">${esc(r.title)}</span><br>`:''}
+          <div class="round-date">${r.date.replace(/-/g,'/')}</div>
+          <div class="round-course">${esc(r.course)}</div>
+          <div class="round-meta">${r.results.length}名参加　🏆 ${wc?esc(pname(wc.playerId)):'-'}</div>
+        </div>
+        <span class="round-arrow">›</span>
+      </div>`;
+    }).join('');
+
+  const logoImg = logoUrl
+    ? `<div class="home-hero-logo-img"><img src="${logoUrl}" /></div>`
+    : `<div class="home-hero-logo-img">⛳</div>`;
+
+  // 次回大会カウントダウン
+  let countdownBanner = '';
+  if (db.nextEvent && db.nextEvent.date) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const ev = new Date(db.nextEvent.date);
+    const diff = Math.ceil((ev - today) / (1000*60*60*24));
+    if (diff >= 0) countdownBanner = `
+      <div class="countdown-card" onclick="go('backup')" style="cursor:pointer;">
+        <div style="font-size:11px;opacity:0.8;margin-bottom:2px;">⛳ ${db.nextEvent.title?esc(db.nextEvent.title)+' ':'次回大会 '}${db.nextEvent.date.replace(/-/g,'/')}</div>
+        <div><span class="countdown-days">${diff}</span><span style="font-size:15px;margin-left:6px;">日後</span></div>
+      </div>`;
+  }
+
+  return `
+    <div class="home-hero">
+      <div style="display:flex;align-items:center;margin-bottom:20px;">
+        ${logoImg}
+        <div style="margin-left:12px;flex:1;min-width:0;">
+          <div class="home-hero-title">ワイガヤJリーグ</div>
+          <div class="home-hero-sub">全${db.rounds.length}ラウンド・${db.players.length}名登録</div>
+        </div>
+        <div class="home-hero-right">
+          <button class="sync-btn" id="syncIcon" onclick="fbPull(false)" title="クラウドと同期">☁️</button>
+        </div>
+      </div>
+      <div class="tile-grid">
+        <button class="tile" onclick="startNew()">
+          <span class="tile-icon">➕</span>
+          <span class="tile-label">新しいラウンド</span>
+        </button>
+        <button class="tile" onclick="go('stats')">
+          <span class="tile-icon">📊</span>
+          <span class="tile-label">成績一覧</span>
+        </button>
+        <button class="tile" onclick="go('player')">
+          <span class="tile-icon">👥</span>
+          <span class="tile-label">メンバー管理</span>
+        </button>
+        <button class="tile" onclick="go('backup')">
+          <span class="tile-icon">💾</span>
+          <span class="tile-label">データ管理</span>
+        </button>
+      </div>
+    </div>
+    <div class="home-content">
+      ${syncStatusBar()}${countdownBanner}${draftBanner}
+      ${rounds.length>0?`<div class="section-label">ラウンド履歴</div>`:''}
+      ${roundList}
+    </div>`;
+}
+
+// =============================================
+//  SCREEN: DETAIL
+// =============================================
+function renderDetail() {
+  const r=db.rounds.find(x=>x.id===ui.viewId);
+  if (!r) return `<div class="content"><div class="empty-state"><div class="empty-msg">データが見つかりません</div></div></div>`;
+  const {j1=0,j2=0,j3=0}=r.medalConfig;
+  const rows=[...r.results].sort((a,b)=>a.rank-b.rank).map(x=>`
+    <div class="result-row">
+      <span class="rank-num">${x.rank}</span>${mb(x.medal)}
+      <span class="result-name">${esc(pname(x.playerId))}</span>
+      <span class="result-score">${x.score}</span>
+    </div>`).join('');
+
+  // ── 組み合わせ表 表示 ──
+  const pairings = r.pairings || [];
+  let pairingsBody = '';
+  if (pairings.length === 0) {
+    pairingsBody = `<div style="color:#bbb;font-size:13px;text-align:center;padding:10px 0;">まだ組み合わせが設定されていません</div>`;
+  } else {
+    pairingsBody = pairings.map((g,i) => `
+      <div class="pairing-view-row">
+        <div class="pairing-view-time">${g.time ? '🕐 '+esc(g.time) : '第'+(i+1)+'組'}</div>
+        <div class="pairing-view-names">${(g.playerIds||[]).map(pid=>esc(pname(pid))).join('　')}</div>
+      </div>`).join('');
+  }
+
+  return `
+    <div class="header"><div class="header-row">
+      <button class="btn-back" onclick="go('home')">‹</button>
+      <div style="flex:1;min-width:0;">
+        <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title?esc(r.title)+' ':''}${esc(r.course)}</h1>
+        <div class="header-sub">${r.date.replace(/-/g,'/')} ・ ${r.results.length}名参加</div>
+      </div>
+      <button class="btn-ghost" onclick="shareResult('${r.id}')" style="margin-right:4px;">📤</button>
+      <button class="btn-ghost" onclick="delRound('${r.id}')">削除</button>
+    </div></div>
+    <div class="content">
+      <div class="card">
+        <div class="text-xs" style="margin-bottom:12px;">WC×1 ／ J1×${j1} ／ J2×${j2} ／ J3×${j3}</div>
+        ${rows}
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">🏌️ 組み合わせ表</div>
+          <button class="btn btn-outline btn-sm" onclick="startEditPairings('${r.id}')">
+            ${pairings.length===0?'設定する':'編集する'}
+          </button>
+        </div>
+        ${pairingsBody}
+      </div>
+    </div>`;
+}
+
+// =============================================
+//  SCREEN: STATS
+// =============================================
+function renderStats() {
+  const active=db.players.filter(p=>stats(p.id).n>0);
+  if (!active.length) return `
+    <div class="header"><h1>📊 成績一覧</h1></div>
+    <div class="content"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-msg">まだデータがありません</div></div></div>`;
+  const sorted=active.map(p=>({...p,s:stats(p.id),hm:holdMedal(p.id)}))
+    .sort((a,b)=>(parseFloat(a.s.avg)||999)-(parseFloat(b.s.avg)||999));
+  const rows=sorted.map(p=>`
+    <tr onclick="go('playerStat','${p.id}')">
+      <td>${esc(p.name)}</td><td>${p.s.n}</td>
+      <td class="${p.s.wc>0?'wc-val':''}">${p.s.wc}</td>
+      <td>${p.s.j1}</td><td>${p.s.j2}</td><td>${p.s.j3}</td>
+      <td>${p.hm?mb(p.hm,true):'<span style="color:#ccc;font-size:16px;">—</span>'}</td>
+      <td>${p.s.avg}</td>
+    </tr>`).join('');
+
+  // メダルランキングボード（上位5名）
+  const topMedal=[...sorted].sort((a,b)=>(b.s.wc*10+b.s.j1*3+b.s.j2*2+b.s.j3)-(a.s.wc*10+a.s.j1*3+a.s.j2*2+a.s.j3)).slice(0,5);
+  const medalBoard=topMedal.map((p,i)=>{
+    const icons=[...Array(p.s.wc)].map(()=>'🏆').join('')+[...Array(p.s.j1)].map(()=>'🥇').join('')+[...Array(p.s.j2)].map(()=>'🥈').join('')+[...Array(p.s.j3)].map(()=>'🥉').join('');
+    return `<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid #f0f0f0;" onclick="go('playerStat','${p.id}')" style="cursor:pointer;">
+      <span style="width:20px;color:#999;font-size:12px;">${i+1}</span>
+      <span style="flex:1;font-size:13px;font-weight:600;">${esc(p.name)}</span>
+      <span style="font-size:16px;letter-spacing:1px;">${icons||'—'}</span>
+    </div>`;
+  }).join('');
+
+  const inactive=db.players.filter(p=>!stats(p.id).n);
+  return `
+    <div class="header"><h1>📊 成績一覧</h1></div>
+    <div class="content">
+      <div class="card">
+        <div class="card-title">🏅 メダルランキング</div>
+        ${medalBoard}
+        <div style="font-size:10px;color:#bbb;margin-top:6px;text-align:right;">🏆WC 🥇J1 🥈J2 🥉J3</div>
+      </div>
+      <div class="card" style="overflow-x:auto;padding:12px 6px;">
+        <table class="stats-table">
+          <thead><tr><th>名前</th><th>R</th><th>🏆WC</th><th>🥇J1</th><th>🥈J2</th><th>🥉J3</th><th>保持</th><th>平均</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div style="font-size:11px;color:#aaa;text-align:center;margin-top:8px;">名前をタップ → 個人詳細</div>
+      </div>
+      <div class="alert alert-info"><strong>保持メダル</strong>＝最後に参加したラウンドのメダル。直近2回連続不参加で表示なし。</div>
+      ${inactive.length?`<div class="text-sm">未参加: ${inactive.map(p=>esc(p.name)).join(' / ')}</div>`:''}
+    </div>`;
+}
+
+// =============================================
+//  SCREEN: PLAYERS
+// =============================================
+function renderPlayers() {
+  const rows=db.players.length===0
+    ?`<div class="text-sm" style="padding:8px 0;">まだメンバーがいません</div>`
+    :db.players.map(p=>{
+      const s=stats(p.id), hm=holdMedal(p.id);
+      const used=db.rounds.some(r=>r.results.some(x=>x.playerId===p.id));
+      if (ui.editPid===p.id) return `
+        <div class="player-edit-row">
+          <input type="text" id="ename_${p.id}" class="form-input" value="${esc(p.name)}" style="flex:1;" />
+          <button class="btn btn-primary btn-sm" style="margin-left:6px;" onclick="saveEdit('${p.id}')">保存</button>
+          <button class="btn btn-gray btn-sm" style="margin-left:4px;" onclick="ui.editPid=null;render()">×</button>
+        </div>`;
+      return `
+        <div class="player-row">
+          <div class="player-info">
+            <div class="player-name-row">${esc(p.name)}${hm?mb(hm,true):''}</div>
+            <div class="player-sub">${s.n}R ・ 平均${s.avg} ・ WC${s.wc}回</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="ui.editPid='${p.id}';render()">編集</button>
+          ${!used?`<button class="btn btn-red btn-sm" style="margin-left:4px;" onclick="delPlayer('${p.id}')">削除</button>`:''}
+        </div>`;
+    }).join('');
+  const hasUsed=db.players.some(p=>db.rounds.some(r=>r.results.some(x=>x.playerId===p.id)));
+  return `
+    <div class="header"><h1>👥 メンバー管理</h1></div>
+    <div class="content">
+      <div class="card">
+        <div class="card-title">メンバーを追加</div>
+        <div class="form-group"><input id="newName" type="text" class="form-input" placeholder="名前を入力してください" /></div>
+        <button class="btn btn-primary" onclick="addPlayer()">追加する</button>
+      </div>
+      <div class="card">
+        <div class="card-title">メンバー一覧（${db.players.length}名）</div>
+        ${rows}
+        ${hasUsed?'<div class="text-xs" style="margin-top:12px;">※ラウンドデータのあるメンバーは削除できません</div>':''}
+      </div>
+    </div>`;
+}
+
+// =============================================
+//  SCREEN: BACKUP / SETTINGS
+// =============================================
+function renderBackup() {
+  const connected = !!fbUrl;
+  return `
+    <div class="header"><div class="header-row">
+      <button class="btn-back" onclick="go('home')">‹</button>
+      <h1>💾 データ管理</h1><div style="width:40px;"></div>
+    </div></div>
+    <div class="content">
+
+      <!-- ☁️ CLOUD SYNC -->
+      <div class="card">
+        <div class="card-title">☁️ クラウド同期設定</div>
+        ${connected
+          ? `<div class="alert alert-green" style="margin-bottom:12px;">✅ クラウド同期が有効です。全端末でデータが共有されます。</div>
+             <div class="text-xs" style="margin-bottom:8px;word-break:break-all;">接続先: ${esc(fbUrl)}</div>
+             <button class="btn btn-outline" onclick="fbPull(false)" style="margin-bottom:8px;">🔄 今すぐ同期する</button>
+             <button class="btn btn-gray" onclick="fbDiag()" style="margin-bottom:8px;">🔍 接続テスト（詳細）</button>
+             <div class="form-group" style="margin-top:10px;margin-bottom:8px;">
+               <label class="form-label">URLを変更する場合はここに入力</label>
+               <input type="url" id="fbUrlInput" class="form-input form-input-sm"
+                 placeholder="https://xxxx-default-rtdb.asia-southeast1.firebasedatabase.app"
+                 value="${esc(fbUrl)}" />
+             </div>
+             <button class="btn btn-primary" onclick="connectCloud()" style="margin-bottom:8px;">🔁 このURLで再接続する</button>
+             <button class="btn btn-gray" onclick="disconnectCloud()">クラウド同期を解除する</button>`
+          : `<div class="alert alert-info" style="margin-bottom:14px;">
+               FirebaseのデータベースURLを入力すると、みんなのスマホでデータがリアルタイムに共有されます。
+               <br><br>設定方法がわからない場合は管理者（Claudeの画面）に相談してください。
+             </div>
+             <div class="form-group">
+               <label class="form-label">Firebase データベースURL</label>
+               <input type="url" id="fbUrlInput" class="form-input form-input-sm"
+                 placeholder="https://xxxx-default-rtdb.asia-southeast1.firebasedatabase.app"
+                 value="${esc(fbUrl)}" />
+             </div>
+             <button class="btn btn-primary" onclick="connectCloud()">接続する</button>`
+        }
+      </div>
+
+      <!-- 📅 NEXT EVENT -->
+      <div class="card">
+        <div class="card-title">📅 次回大会</div>
+        <div class="form-group">
+          <label class="form-label">タイトル（任意）</label>
+          <input type="text" id="nextEventTitle" class="form-input form-input-sm"
+            placeholder="例: 第11回ワイガヤJリーグ" value="${esc(db.nextEvent?.title||'')}"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">開催日</label>
+          <input type="date" id="nextEventDate" class="form-input form-input-sm"
+            value="${db.nextEvent?.date||''}"/>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="saveNextEvent()">💾 登録する</button>
+          ${db.nextEvent?.date?`<button class="btn btn-gray" onclick="clearNextEvent()">削除</button>`:''}
+        </div>
+      </div>
+
+      <!-- 🖼 LOGO -->
+      <div class="card">
+        <div class="card-title">🖼 ロゴ設定</div>
+        ${logoUrl?`<div style="text-align:center;margin-bottom:12px;"><img src="${logoUrl}" style="max-height:80px;border-radius:8px;" /></div>`:''}
+        <input type="file" id="logoFile" accept="image/*" style="display:none;" onchange="uploadLogo(this)" />
+        <button class="btn btn-outline" onclick="document.getElementById('logoFile').click()" style="margin-bottom:8px;">ロゴ画像を選択する</button>
+        ${logoUrl?`<button class="btn btn-gray" onclick="deleteLogo()" style="margin-top:8px;">ロゴを削除する</button>`:''}
+      </div>
+
+      <!-- 📥 EXPORT -->
+      <div class="card">
+        <div class="card-title">📥 エクスポート</div>
+        <button class="btn btn-outline" onclick="expRoundsCSV()" style="margin-bottom:10px;">ラウンド結果 CSV</button>
+        <button class="btn btn-outline" onclick="expStatsCSV()"  style="margin-bottom:10px;">個人成績 CSV</button>
+        <button class="btn btn-outline" onclick="expJSON()">全データ バックアップ (JSON)</button>
+      </div>
+
+      <!-- 📤 IMPORT -->
+      <div class="card">
+        <div class="card-title">📤 インポート（データ復元）</div>
+        <div class="alert alert-warn">⚠️ 現在のデータはすべて上書きされます</div>
+        <input type="file" id="impFile" accept=".json" style="display:none;" onchange="impJSON(this)" />
+        <button class="btn btn-outline" onclick="document.getElementById('impFile').click()">JSONファイルを選択して復元</button>
+      </div>
+
+      <!-- 🗑 RESET -->
+      <div class="card">
+        <div class="card-title">🗑️ データリセット</div>
+        <div class="text-sm" style="margin-bottom:12px;">全データを削除します。元に戻せません。</div>
+        <button class="btn btn-red" onclick="resetAll()">全データを削除する</button>
+      </div>
+    </div>`;
+}
+
+// =============================================
+//  SCREEN: PAIRINGS EDITOR（組み合わせ表）
+// =============================================
+function renderPairingsEditor() {
+  const isWizard = (ui.pairingRoundId === null);
+  let participants, roundLabel;
+  if (isWizard) {
+    participants = ui.nr ? ui.nr.pIds : [];
+    const nr = ui.nr||{};
+    roundLabel = `${nr.title?esc(nr.title)+' ':''}${esc(nr.course||'')}`;
+  } else {
+    const r = db.rounds.find(x=>x.id===ui.pairingRoundId);
+    if (!r) { go('home'); return ''; }
+    participants = r.results.map(x=>x.playerId);
+    roundLabel = `${r.title?esc(r.title)+' ':''}${esc(r.course)}`;
+  }
+  const groups = ui.editGroups;
+
+  // 全参加者のうち既にどこかの組にいる人を集計
+  const assigned = new Set(groups.flatMap(g=>g.playerIds));
+  const unassigned = participants.filter(pid=>!assigned.has(pid));
+
+  const groupCards = groups.length === 0
+    ? `<div style="text-align:center;color:#bbb;font-size:13px;padding:20px 0;">「＋ 組を追加する」から組を作ってください</div>`
+    : groups.map((g,gi) => {
+        const isOpen = ui.openGroupIdx === gi;
+        const chips = (g.playerIds||[]).map(pid=>`
+          <span class="p-chip">
+            ${esc(pname(pid))}
+            <button class="p-chip-rm" onclick="rmFromGroup(${gi},'${pid}')">×</button>
+          </span>`).join('');
+
+        // この組に追加できる（未配置の）メンバー
+        const addable = participants.filter(pid=>!assigned.has(pid));
+        const addPool = isOpen
+          ? `<div class="add-pool">
+               <div style="font-size:12px;color:var(--text2);margin-bottom:5px;width:100%;">タップして追加</div>
+               ${addable.length === 0
+                 ? '<span style="font-size:13px;color:#bbb;">未配置のメンバーはいません</span>'
+                 : addable.map(pid=>`<button class="pool-btn" onclick="addToGroup(${gi},'${pid}')">${esc(pname(pid))}</button>`).join('')}
+             </div>`
+          : '';
+
+        return `
+          <div class="pairing-group-card">
+            <div class="pairing-time-row">
+              <span style="font-size:16px;">🕐</span>
+              <input type="text" class="pairing-time-input"
+                id="ptime_${gi}"
+                placeholder="スタート時間（例: 8:00）任意"
+                value="${esc(g.time||'')}"
+                oninput="ui.editGroups[${gi}].time=this.value" />
+              <button class="pairing-group-del" onclick="removeGroup(${gi})">🗑 削除</button>
+            </div>
+            <div class="p-chips">
+              ${chips || '<span style="font-size:13px;color:#ccc;">メンバーを追加してください</span>'}
+            </div>
+            <div style="margin-top:9px;">
+              <button class="btn btn-outline btn-sm" style="font-size:12px;padding:5px 12px;"
+                onclick="ui.openGroupIdx=${isOpen?-1:gi};render()">
+                ${isOpen ? '▲ 閉じる' : '＋ メンバーを追加'}
+              </button>
+            </div>
+            ${addPool}
+          </div>`;
+      }).join('');
+
+  const unassignedSection = unassigned.length > 0
+    ? `<div class="card" style="background:#FFF8E1;border:1.5px solid #FFE082;">
+         <div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px;">
+           ⚠️ まだ組に入っていないメンバー（${unassigned.length}名）
+         </div>
+         <div style="display:flex;flex-wrap:wrap;gap:6px;">
+           ${unassigned.map(pid=>`<span class="p-chip" style="background:#FFF8E1;border-color:#FFCC02;">${esc(pname(pid))}</span>`).join('')}
+         </div>
+       </div>`
+    : groups.length > 0
+      ? `<div class="alert alert-green" style="margin-bottom:12px;">✅ 全員が組に配置されています</div>`
+      : '';
+
+  return `
+    <div class="header"><div class="header-row">
+      <button class="btn-back" onclick="cancelPairings()">‹</button>
+      <div style="flex:1;min-width:0;">
+        <h1>🏌️ 組み合わせ表</h1>
+        <div class="header-sub">${roundLabel}${isWizard?' （入力途中）':''}</div>
+      </div>
+      <div style="width:40px;"></div>
+    </div></div>
+    <div class="content">
+      <div class="alert alert-info" style="margin-bottom:14px;">
+        組を作り、参加者をタップして割り当ててください。スタート時間は省略可です。後からでも編集できます。
+      </div>
+      <button class="btn btn-outline" onclick="startOCR('pairing')" style="width:100%;margin-bottom:14px;">📷 組み合わせ表の写真から読み込む（β）</button>
+      ${groupCards}
+      <button class="btn btn-outline" onclick="addGroup()" style="margin-bottom:14px;">＋ 組を追加する</button>
+      ${unassignedSection}
+      <button class="btn btn-primary" onclick="savePairings()">💾 組み合わせを保存する</button>
+    </div>`;
+}
+
+// =============================================
+//  WIZARD
+// =============================================
+function renderWizard() {
+  const labels=['基本情報','参加者・メダル設定','スコア入力','結果確認'];
+  const s=ui.step;
+  const dots=labels.map((_,i)=>`<div class="step-dot ${i<s?'done':i===s?'active':''}"></div>`).join('');
+  const sh=`<div class="step-wrap"><div class="step-dots">${dots}</div><div class="step-label">ステップ${s+1}／${labels.length}：${labels[s]}</div></div>`;
+  if (s===0) return wiz0(sh);
+  if (s===1) return wiz1(sh);
+  if (s===2) return wiz2(sh);
+  return wiz3(sh);
+}
+function wizHdr(t,b) { return `<div class="header"><div class="header-row"><button class="btn-back" onclick="${b}">‹</button><h1>${t}</h1><div style="width:40px;"></div></div></div>`; }
+function wiz0(sh) {
+  const nr=ui.nr;
+  return `${wizHdr('新しいラウンド','leaveWizard()')}
+    <div class="content">${sh}<div class="card">
+      <div class="form-group"><label class="form-label">タイトル（任意）</label>
+        <input type="text" id="rTitle" class="form-input" placeholder="例: 第3回・春の陣" value="${esc(nr.title||'')}" /></div>
+      <div class="form-group"><label class="form-label">日付</label>
+        <input type="date" id="rDate" class="form-input" value="${nr.date||today()}" /></div>
+      <div class="form-group"><label class="form-label">コース名</label>
+        <input type="text" id="rCourse" class="form-input" placeholder="例: ○○カントリークラブ" value="${esc(nr.course||'')}" /></div>
+    </div>
+    <button class="btn btn-primary" onclick="w0next()">次へ ›</button></div>`;
+}
+function wiz1(sh) {
+  const nr=ui.nr, sel=nr.pIds, cfg=nr.medal;
+  const checks=db.players.length===0
+    ?`<div class="alert alert-warn">メンバーが未登録です。「メンバー」タブから追加してください。</div>`
+    :db.players.map(p=>`
+      <label class="check-item" onclick="toggle('${p.id}')">
+        <input type="checkbox" ${sel.includes(p.id)?'checked':''} onchange="toggle('${p.id}')" onclick="event.stopPropagation()" />
+        <span class="check-label">${esc(p.name)}</span>
+      </label>`).join('');
+  const mcRow=(med,key)=>`
+    <div class="medal-row">${mb(med)}
+      <span class="medal-label">${med==='WC'?'ワールドチャンピオン':med}</span>
+      ${med==='WC'
+        ?`<span style="font-size:18px;font-weight:700;color:var(--primary);">1</span>`
+        :`<div class="medal-count-wrap">
+            <button class="medal-count-btn" onclick="adjMedal('${key}',-1)">－</button>
+            <span class="medal-count-val" id="mc_${key}">${cfg[key]}</span>
+            <button class="medal-count-btn" onclick="adjMedal('${key}',1)">＋</button>
+          </div>`}
+    </div>`;
+  const pCount = (nr.pairings||[]).length;
+  const pairingBtn = sel.length >= 2
+    ? `<div style="padding-top:12px;margin-top:4px;border-top:1px solid var(--border);">
+         <button class="btn btn-outline" onclick="startWizardPairings()" style="position:relative;">
+           🏌️ 組み合わせを入力する（任意）
+           ${pCount>0?`<span style="font-size:11px;background:var(--primary);color:white;border-radius:10px;padding:2px 7px;margin-left:6px;">${pCount}組設定済み</span>`:''}
+         </button>
+         <div class="text-xs" style="margin-top:6px;">スタート順・組を今決めておけます。後からでも変更可。</div>
+       </div>`
+    : '';
+  return `${wizHdr('参加者・メダル設定','ui.step=0;render()')}
+    <div class="content">${sh}
+      <div class="card"><div class="card-title">参加者を選択（${sel.length}名選択中）</div>${checks}${pairingBtn}</div>
+      <div class="card">
+        <div class="card-title">メダル枚数を設定</div>
+        <div class="alert alert-info" style="margin-bottom:14px;">WCは常に1名。J1〜J3の枚数を設定してください。</div>
+        ${mcRow('WC','')}${mcRow('J1','j1')}${mcRow('J2','j2')}${mcRow('J3','j3')}
+      </div>
+      <button class="btn btn-outline" onclick="tempSave()" style="margin-bottom:10px;">💾 一時保存する</button>
+      <button class="btn btn-primary" onclick="w1next()">次へ ›</button>
+    </div>`;
+}
+function wiz2(sh) {
+  const nr=ui.nr;
+  const rows=nr.pIds.map(pid=>`
+    <div class="score-row">
+      <span class="score-name">${esc(pname(pid))}</span>
+      <input type="number" class="score-input" id="sc_${pid}" value="${nr.scores[pid]||''}" placeholder="--" min="40" max="200" inputmode="numeric" />
+    </div>`).join('');
+  return `${wizHdr('スコア入力','saveScoresThenBack()')}
+    <div class="content">${sh}
+      <button class="btn btn-outline" onclick="startOCR('score')" style="width:100%;margin-bottom:10px;">📷 結果表の写真から読み込む（β）</button>
+      <div class="card">${rows}</div>
+      <button class="btn btn-primary" onclick="w2next()">結果を確認 ›</button>
+    </div>`;
+}
+function wiz3(sh) {
+  const nr=ui.nr;
+  const results=calcResults(nr.pIds.map(pid=>({playerId:pid,score:parseInt(nr.scores[pid])})), nr.medal, lastRoundResults(null));
+  ui.nr._computed=results;
+  const rows=[...results].sort((a,b)=>a.rank-b.rank).map(r=>`
+    <div class="result-row">
+      <span class="rank-num">${r.rank}</span>${mb(r.medal)}
+      <span class="result-name">${esc(pname(r.playerId))}</span>
+      <span class="result-score">${r.score}</span>
+    </div>`).join('');
+  return `${wizHdr('結果確認','ui.step=2;render()')}
+    <div class="content">${sh}
+      <div class="card">
+        ${nr.title?`<div style="font-size:13px;color:var(--primary);font-weight:700;margin-bottom:2px;">${esc(nr.title)}</div>`:''}
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px;">${esc(nr.course)}</div>
+        <div class="text-sm" style="margin-bottom:14px;">${nr.date.replace(/-/g,'/')} ・ ${nr.pIds.length}名参加</div>
+        ${rows}
+      </div>
+      <button class="btn btn-primary" onclick="saveRound()">💾 この結果を保存する</button>
+    </div>`;
+}
+
+// =============================================
+//  RENDER
+// =============================================
+let ui = { screen:'home', viewId:null, nr:null, step:0, editPid:null,
+           pairingRoundId:null, editGroups:[], openGroupIdx:-1 };
+
+function render() {
+  let html='';
+  switch(ui.screen) {
+    case 'home':   html=renderHome(); break;
+    case 'detail': html=renderDetail(); break;
+    case 'stats':      html=renderStats(); break;
+    case 'playerStat': html=renderPlayerStat(); break;
+    case 'player':     html=renderPlayers(); break;
+    case 'backup': html=renderBackup(); break;
+    case 'wizard':   html=renderWizard(); break;
+    case 'pairings': html=renderPairingsEditor(); break;
+    default:       html=renderHome();
+  }
+  if (ui.screen==='wizard' && ui.nr) saveDraft(ui.nr, ui.step);
+  const showNav=ui.screen!=='wizard' && ui.screen!=='pairings';
+  const base={'home':'home','detail':'home','backup':'home','stats':'stats','player':'player'}[ui.screen]||ui.screen;
+  const nav=showNav?`<nav class="bottom-nav">
+    ${[{k:'home',i:'🏠',l:'ラウンド'},{k:'stats',i:'📊',l:'成績'},{k:'player',i:'👥',l:'メンバー'}].map(n=>`
+      <button class="nav-btn ${base===n.k?'active':''}" onclick="go('${n.k}')">
+        <span class="nav-icon">${n.i}</span><span>${n.l}</span>
+      </button>`).join('')}
+  </nav>`:'';
+  document.getElementById('app').innerHTML=html+nav;
+  updateSyncUI();
+  window.scrollTo(0,0);
+}
+
+// =============================================
+//  NAVIGATION
+// =============================================
+const PROTECTED_SCREENS = ['player', 'backup'];
+const APP_PASSWORD = 'waigaya';
+
+function go(screen, id) {
+  if (PROTECTED_SCREENS.includes(screen) && !ui.authed) {
+    const pw = prompt('🔒 パスワードを入力してください');
+    if (pw !== APP_PASSWORD) {
+      if (pw !== null) showToast('⚠️ パスワードが違います');
+      return;
+    }
+    ui.authed = true;
+  }
+  if (screen === 'home') ui.authed = false; // ホームに戻ったら認証リセット
+  ui.screen=screen; ui.viewId=id||null;
+  if (screen!=='wizard') ui.editPid=null;
+  render();
+}
+function startNew() {
+  ui.screen='wizard';
+  ui.nr={date:today(),title:'',course:'',pIds:[],scores:{},medal:{...loadMedal()},pairings:[]};
+  ui.step=0; render();
+}
+function resumeDraft() {
+  const d=loadDraft(); if(!d) return;
+  ui.screen='wizard'; ui.nr=d.nr; ui.step=d.step||0; render();
+}
+function leaveWizard() {
+  if (ui.nr) saveDraft(ui.nr, ui.step);
+  go('home');
+}
+
+// =============================================
+//  WIZARD ACTIONS
+// =============================================
+function w0next() {
+  const title=document.getElementById('rTitle').value.trim();
+  const date=document.getElementById('rDate').value;
+  const course=document.getElementById('rCourse').value.trim();
+  if (!date) { alert('日付を選択してください'); return; }
+  if (!course) { alert('コース名を入力してください'); return; }
+  ui.nr.title=title; ui.nr.date=date; ui.nr.course=course;
+  ui.step=1; render();
+}
+function toggle(pid) {
+  const ids=ui.nr.pIds, i=ids.indexOf(pid);
+  if (i===-1) {
+    ids.push(pid);
+  } else {
+    ids.splice(i,1);
+    // 組み合わせからも除名
+    if (ui.nr.pairings) {
+      ui.nr.pairings.forEach(g=>{ g.playerIds=g.playerIds.filter(x=>x!==pid); });
+      ui.nr.pairings=ui.nr.pairings.filter(g=>g.playerIds.length>0);
+    }
+  }
+  ui.nr.scores={}; render();
+}
+function adjMedal(key, d) {
+  const cur=ui.nr.medal[key]+d; if (cur<0) return;
+  ui.nr.medal[key]=cur;
+  const el=document.getElementById('mc_'+key); if(el) el.textContent=cur;
+}
+function tempSave() {
+  ['j1','j2','j3'].forEach(k=>{const el=document.getElementById('mc_'+k);if(el) ui.nr.medal[k]=parseInt(el.textContent)||0;});
+  saveDraft(ui.nr, ui.step); showToast('💾 一時保存しました！');
+}
+function w1next() {
+  ['j1','j2','j3'].forEach(k=>{const el=document.getElementById('mc_'+k);if(el) ui.nr.medal[k]=parseInt(el.textContent)||0;});
+  if (ui.nr.pIds.length<2) { alert('参加者を2名以上選択してください'); return; }
+  const {j1,j2,j3}=ui.nr.medal, tot=1+j1+j2+j3;
+  if (tot>ui.nr.pIds.length) { alert(`メダル合計（${tot}枚）が参加者数（${ui.nr.pIds.length}名）を超えています。`); return; }
+  ui.step=2; render();
+}
+function saveScoresThenBack() {
+  for (const pid of ui.nr.pIds) {const el=document.getElementById('sc_'+pid);if(el&&el.value) ui.nr.scores[pid]=el.value;}
+  ui.step=1; render();
+}
+function w2next() {
+  const sc={};
+  for (const pid of ui.nr.pIds) {
+    const v=document.getElementById('sc_'+pid).value;
+    if (!v||isNaN(parseInt(v))) { alert('全員のスコアを入力してください'); return; }
+    sc[pid]=parseInt(v);
+  }
+  ui.nr.scores=sc; ui.step=3; render();
+}
+function saveRound() {
+  const nr=ui.nr;
+  db.rounds.push({id:uid(),title:nr.title||'',date:nr.date,course:nr.course,medalConfig:{...nr.medal},results:nr._computed,pairings:nr.pairings||[]});
+  saveDB(db); saveMedal(nr.medal); clearDraft();
+  const rid=db.rounds[db.rounds.length-1].id;
+  ui.screen='detail'; ui.viewId=rid; render();
+}
+
+// =============================================
+//  PLAYER ACTIONS
+// =============================================
+function addPlayer() {
+  const el=document.getElementById('newName'), name=el.value.trim();
+  if (!name) { alert('名前を入力してください'); return; }
+  if (db.players.some(p=>p.name===name)) { alert('同じ名前のメンバーがすでにいます'); return; }
+  db.players.push({id:uid(),name}); saveDB(db); el.value=''; render();
+}
+function saveEdit(id) {
+  const el=document.getElementById('ename_'+id); if(!el) return;
+  const name=el.value.trim();
+  if (!name) { alert('名前を入力してください'); return; }
+  if (db.players.some(p=>p.id!==id&&p.name===name)) { alert('同じ名前のメンバーがすでにいます'); return; }
+  const p=db.players.find(p=>p.id===id); if(p) p.name=name;
+  saveDB(db); ui.editPid=null; render();
+}
+function delPlayer(id) {
+  if (db.rounds.some(r=>r.results.some(x=>x.playerId===id))) {
+    showToast('⚠️ ラウンドデータありのメンバーは削除不可。名前変更はできます。'); return;
+  }
+  safeAct('delP_'+id, ()=>{ db.players=db.players.filter(p=>p.id!==id); saveDB(db); render(); });
+}
+function delRound(id) {
+  safeAct('delR_'+id, ()=>{ db.rounds=db.rounds.filter(r=>r.id!==id); saveDB(db); go('home'); });
+}
+
+// =============================================
+//  CLOUD ACTIONS
+// =============================================
+async function fbDiag() {
+  const ep = fbEndpoint();
+  if (!ep) { alert('URLが設定されていません'); return; }
+  let msg = '📡 接続テスト結果\n\n';
+  msg += `URL: ${ep}\n\n`;
+  // GET テスト
+  try {
+    const r = await fetch(ep);
+    msg += `GET → ステータス: ${r.status} ${r.statusText}\n`;
+    const txt = await r.text();
+    msg += `レスポンス: ${txt.slice(0,80)}\n\n`;
+  } catch(e) { msg += `GET → エラー: ${e.message}\n\n`; }
+  // PUT テスト
+  try {
+    const r2 = await fetch(ep, {method:'PUT', body:'{"_test":1}', headers:{'Content-Type':'application/json'}});
+    msg += `PUT → ステータス: ${r2.status} ${r2.statusText}\n`;
+    const txt2 = await r2.text();
+    msg += `レスポンス: ${txt2.slice(0,80)}`;
+  } catch(e) { msg += `PUT → エラー: ${e.message}`; }
+  alert(msg);
+}
+function connectCloud() {
+  const url=document.getElementById('fbUrlInput').value.trim();
+  if (!url) { alert('URLを入力してください'); return; }
+  if (!url.startsWith('https://')) { alert('URLは https:// で始まる必要があります'); return; }
+  fbUrl=url; saveFbUrl(url);
+  showToast('☁️ 接続しました！データを同期します…');
+  render();
+  setTimeout(()=>fbPull(false), 300);
+}
+function disconnectCloud() {
+  fbUrl=''; ldel(FB_KEY); syncSt='none'; render();
+  showToast('🔌 クラウド同期を解除しました');
+}
+
+// =============================================
+//  LOGO
+// =============================================
+function uploadLogo(input) {
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{logoUrl=e.target.result;saveLogo(logoUrl);render();showToast('✅ ロゴを設定しました！');};
+  reader.readAsDataURL(file);
+}
+function deleteLogo() {
+  safeAct('delLogo', ()=>{ logoUrl=''; ldel(LOGO_KEY); render(); }, '⚠️ もう一度タップするとロゴを削除します');
+}
+
+// =============================================
+//  PAIRINGS ACTIONS
+// =============================================
+function startWizardPairings() {
+  // ウィザードのステップ1から組み合わせ編集画面を開く
+  ['j1','j2','j3'].forEach(k=>{const el=document.getElementById('mc_'+k);if(el) ui.nr.medal[k]=parseInt(el.textContent)||0;});
+  ui.pairingRoundId = null; // nullでウィザードモードを示す
+  ui.editGroups = (ui.nr.pairings||[]).map(g=>({...g, playerIds:[...(g.playerIds||[])]}));
+  ui.openGroupIdx = -1;
+  go('pairings');
+}
+function startEditPairings(roundId) {
+  const r = db.rounds.find(x=>x.id===roundId);
+  if (!r) return;
+  ui.pairingRoundId = roundId;
+  // 既存の組み合わせをディープコピーして編集用にセット
+  ui.editGroups = (r.pairings||[]).map(g=>({...g, playerIds:[...(g.playerIds||[])]}));
+  ui.openGroupIdx = -1;
+  go('pairings');
+}
+function addGroup() {
+  // 入力中の時間を保存してから追加
+  ui.editGroups.forEach((g,i)=>{const el=document.getElementById('ptime_'+i);if(el) g.time=el.value.trim();});
+  ui.editGroups.push({time:'', playerIds:[]});
+  ui.openGroupIdx = ui.editGroups.length - 1;
+  render();
+}
+function removeGroup(gi) {
+  ui.editGroups.splice(gi, 1);
+  ui.openGroupIdx = -1;
+  render();
+}
+function addToGroup(gi, pid) {
+  // 入力中の時間を保存
+  ui.editGroups.forEach((g,i)=>{const el=document.getElementById('ptime_'+i);if(el) g.time=el.value.trim();});
+  if (!ui.editGroups[gi].playerIds.includes(pid)) ui.editGroups[gi].playerIds.push(pid);
+  ui.openGroupIdx = -1;
+  render();
+}
+function rmFromGroup(gi, pid) {
+  ui.editGroups.forEach((g,i)=>{const el=document.getElementById('ptime_'+i);if(el) g.time=el.value.trim();});
+  ui.editGroups[gi].playerIds = ui.editGroups[gi].playerIds.filter(x=>x!==pid);
+  render();
+}
+function savePairings() {
+  // 最新の時間入力値を反映
+  ui.editGroups.forEach((g,i)=>{const el=document.getElementById('ptime_'+i);if(el) g.time=el.value.trim();});
+  const saved = ui.editGroups.map(g=>({time:g.time||'', playerIds:[...(g.playerIds||[])]}));
+  if (ui.pairingRoundId === null) {
+    // ウィザードモード：ui.nr に保存してステップ1に戻る
+    ui.nr.pairings = saved;
+    showToast('✅ 組み合わせを設定しました！');
+    ui.screen = 'wizard'; render();
+  } else {
+    // 詳細画面モード：ラウンドデータに保存
+    const r = db.rounds.find(x=>x.id===ui.pairingRoundId);
+    if (!r) return;
+    r.pairings = saved;
+    saveDB(db);
+    showToast('✅ 組み合わせを保存しました！');
+    go('detail', ui.pairingRoundId);
+  }
+}
+function cancelPairings() {
+  if (ui.pairingRoundId === null) {
+    ui.screen = 'wizard'; render();
+  } else {
+    go('detail', ui.pairingRoundId);
+  }
+}
+
+// =============================================
+//  OCR（写真から自動入力）
+// =============================================
+async function ocrImage(file, useTable=true) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('language', 'jpn');
+  fd.append('apikey', 'helloworld');
+  fd.append('isOverlayRequired', 'false');
+  fd.append('scale', 'true');
+  if (useTable) fd.append('isTable', 'true');  // スコア表のみ有効（案内文書は無効）
+  const r = await fetch('https://api.ocr.space/parse/image', {method:'POST', body:fd});
+  if (!r.ok) throw new Error('network');
+  const d = await r.json();
+  if (d.IsErroredOnProcessing) throw new Error('ocr_fail');
+  return d.ParsedResults?.[0]?.ParsedText || '';
+}
+
+// 結果表からスコアを抽出
+function parseScoreSheet(text, pIds) {
+  // isTable=true で OCR すると「名前と数字が同じ行」になる。
+  // 各行で名前を探し、OUT+IN を計算してGROSSを求める。
+  // 計算値がOCRテキスト全体に存在する数字か検証して誤ペアを除外する。
+  const lines = text.split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(l => l);
+  // OCRテキスト全体に存在する数値セット（GROSS値の存在確認用）
+  const allTextNums = new Set((text.match(/\d+/g)||[]).map(Number));
+  const result = [];
+
+  for (const pid of pIds) {
+    const name = pname(pid);
+    const parts = name.split(/\s+/);
+    const compact = name.replace(/\s/g, '');
+    const sei = parts[0] || '';
+    let score = null;
+
+    for (let li = 0; li < lines.length; li++) {
+      const lc = lines[li].replace(/\s/g, '');
+      // 姓名の完全一致 or 姓だけで行を特定
+      if (!lc.includes(compact) && !lc.includes(sei)) continue;
+
+      // この行のみで数字を探す（次の行と結合しない＝別選手の数字を混入させない）
+      const nums = (lines[li].match(/\d+/g) || []).map(Number);
+
+      // 方法①: 隣り合う2数(a,b)が両方[30,90]なら OUT+IN → GROSS を計算
+      // OUTとINは表の中で必ず隣り合っているため、隣接ペアのみ対象にする
+      for (let i = 0; i < nums.length - 1; i++) {
+        const a = nums[i];
+        if (a < 30 || a > 90) continue;
+        const b = nums[i + 1];
+        if (b < 30 || b > 90) continue;
+        score = a + b;
+        break;
+      }
+
+      // 方法②: 見つからなければ行内の 80〜160 の整数を GROSS とみなす
+      if (!score) {
+        const cands = nums.filter(n => n >= 80 && n <= 160);
+        if (cands.length > 0) score = cands[0];
+      }
+
+      break; // この選手の行が見つかったのでループ終了
+    }
+
+    result.push({ playerId: pid, name, score, raw: '' });
+  }
+
+  // 消去法フォールバック: 名前行でスコアが取れなかった選手に残りのGROSS値を割り当てる
+  // 全OCRテキストから85〜160の整数を収集し、すでに割り当てたスコアを引いて残った値を使う
+  const nullResults = result.filter(r => !r.score);
+  if (nullResults.length > 0) {
+    const usedScores = result.filter(r => r.score).map(r => r.score);
+    const allNums85 = (text.match(/\b\d{2,3}\b/g)||[]).map(Number).filter(n => n >= 85 && n <= 160);
+    const remaining = [...usedScores];
+    const available = [];
+    for (const n of allNums85) {
+      const idx = remaining.indexOf(n);
+      if (idx >= 0) {
+        remaining.splice(idx, 1); // 使用済みスコアは1つだけ除外
+      } else {
+        available.push(n);
+      }
+    }
+    // 重複除去して最初の候補を割り当て
+    const deduped = [...new Set(available)];
+    nullResults.forEach((r, i) => {
+      if (i < deduped.length) r.score = deduped[i];
+    });
+  }
+
+  return result;
+}
+
+// 組み合わせ表からグループを抽出
+function parsePairingSheet(text, participants) {
+  const lines = text.split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(l => l);
+
+  // Step1: 各選手が何行目に出現するか記録（姓名完全一致 → 姓のみ → 名のみの順で）
+  const playerLineMap = {}; // pid -> lineIndex
+  for (const pid of participants) {
+    const nameParts = pname(pid).split(/\s+/);
+    const compact = pname(pid).replace(/\s/g, '');
+    const sei = nameParts[0] || '';
+    const mei = nameParts.slice(1).join(''); // 名（OCRが姓を誤読した場合のフォールバック）
+
+    // ①姓名完全一致（最優先）
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].replace(/\s/g,'').includes(compact)) { playerLineMap[pid] = i; break; }
+    }
+    // ②姓のみ（OCRが名を誤読した場合）
+    if (playerLineMap[pid] === undefined && sei.length >= 2) {
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].replace(/\s/g,'').includes(sei)) { playerLineMap[pid] = i; break; }
+      }
+    }
+    // ③名のみ（OCRが姓を誤読した場合 例：鳥→等）
+    if (playerLineMap[pid] === undefined && mei.length >= 2) {
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].replace(/\s/g,'').includes(mei)) { playerLineMap[pid] = i; break; }
+      }
+    }
+  }
+
+  // Step2: "N組" が行頭にある行だけ収集（「4組」と「（4組）」等の誤検出を防ぐ）
+  const groupMarkers = []; // {groupNum, lineIndex}
+  for (let i = 0; i < lines.length; i++) {
+    const lc = lines[i].replace(/\s/g,'');
+    // 行頭が N組 で始まる行のみ（例: "1組古賀敏之", "2組目高橋浩" → OK）
+    const m = lc.match(/^([1-9])組/);
+    if (m) {
+      const gn = parseInt(m[1]);
+      if (!groupMarkers.find(g => g.groupNum === gn)) {
+        groupMarkers.push({ groupNum: gn, lineIndex: i });
+      }
+    }
+  }
+
+  if (groupMarkers.length === 0) return [];
+  groupMarkers.sort((a, b) => a.lineIndex - b.lineIndex);
+
+  // Step3: 各グループマーカーの行〜次のマーカーの直前まで（最大8行）を「窓」として選手を割り当て
+  const groups = [];
+  const usedPlayers = new Set();
+  for (let gi = 0; gi < groupMarkers.length; gi++) {
+    const { lineIndex } = groupMarkers[gi];
+    const nextLine = gi + 1 < groupMarkers.length ? groupMarkers[gi+1].lineIndex : lines.length;
+    const windowEnd = Math.min(lineIndex + 8, nextLine);
+
+    let time = '';
+    for (let li = lineIndex; li < windowEnd; li++) {
+      const tm = lines[li].match(/(\d{1,2}:\d{2})/);
+      if (tm) { time = tm[1]; break; }
+    }
+
+    const playerIds = [];
+    for (const pid of participants) {
+      if (usedPlayers.has(pid)) continue;
+      const pl = playerLineMap[pid];
+      if (pl !== undefined && pl >= lineIndex && pl < windowEnd) {
+        playerIds.push(pid);
+        usedPlayers.add(pid);
+      }
+    }
+
+    if (playerIds.length > 0) groups.push({ time, playerIds });
+  }
+
+  return groups;
+}
+
+function showOCRScorePanel(matches, rawText) {
+  const rows = matches.map(m=>`
+    <div class="ocr-match-row">
+      <span style="flex:1;font-size:14px;font-weight:600;">${esc(m.name)}</span>
+      <input type="number" class="score-input" id="ocr_${m.playerId}"
+        value="${m.score||''}" placeholder="--" min="40" max="200" inputmode="numeric"
+        style="width:72px;" />
+      <span class="ocr-badge ${m.score?'ocr-badge-ok':'ocr-badge-ng'}">${m.score?'✓ 読取':'要入力'}</span>
+    </div>`).join('');
+  const safeRaw = esc(rawText||'').replace(/\n/g,'<br>');
+  const el = document.createElement('div');
+  el.className='ocr-overlay'; el.id='ocrOverlay';
+  el.innerHTML=`
+    <div class="ocr-panel">
+      <div class="ocr-panel-title">📷 読み取り結果の確認</div>
+      <div class="ocr-panel-sub">スコアを確認し、間違いは修正してから「適用する」を押してください</div>
+      ${rows}
+      <div style="margin-top:14px;">
+        <button class="btn btn-outline btn-sm" style="font-size:11px;padding:4px 10px;width:auto;"
+          onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+          🔍 OCR生テキストを確認（デバッグ用）
+        </button>
+        <pre style="display:none;font-size:10px;background:#f5f5f5;border-radius:8px;padding:10px;margin-top:6px;max-height:160px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;">${safeRaw}</pre>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn btn-primary" onclick="applyOCRScores()">✅ 適用する</button>
+        <button class="btn btn-gray" onclick="document.getElementById('ocrOverlay').remove()" style="width:auto;padding:13px 16px;">キャンセル</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+}
+
+function applyOCRScores() {
+  const pIds = ui.nr?.pIds||[];
+  for (const pid of pIds) {
+    const el = document.getElementById('ocr_'+pid);
+    if (el&&el.value) ui.nr.scores[pid]=el.value;
+  }
+  document.getElementById('ocrOverlay')?.remove();
+  render(); showToast('✅ スコアを入力しました！');
+}
+
+function showOCRPairingPanel(groups, participants, rawText) {
+  const totalFound = groups.reduce((s, g) => s + g.playerIds.length, 0);
+  const notFound = participants.filter(pid => !groups.some(g => g.playerIds.includes(pid)));
+
+  const groupsJson = JSON.stringify(groups).replace(/"/g,'&quot;');
+  const groupRows = groups.map((g, gi) => `
+    <div style="margin-bottom:8px;padding:8px 10px;background:#f0f7ff;border-radius:8px;">
+      <span style="font-weight:700;font-size:13px;">${gi+1}組</span>
+      ${g.time ? `<span style="font-size:11px;color:#666;margin-left:6px;">⏰ ${esc(g.time)}</span>` : ''}
+      <div style="margin-top:4px;font-size:13px;">${g.playerIds.map(pid=>esc(pname(pid))).join('　/　')}</div>
+    </div>`).join('');
+
+  const notFoundRow = notFound.length > 0 ? `
+    <div style="padding:8px 10px;background:#fff3e0;border-radius:8px;font-size:12px;color:#b26a00;">
+      ⚠️ 未割り当て（${notFound.length}名）: ${notFound.map(pid=>esc(pname(pid))).join('、')}
+    </div>` : `<div style="font-size:12px;color:#2e7d32;">✅ 全員割り当て済み</div>`;
+
+  const safeRaw = esc(rawText||'').replace(/\n/g,'<br>');
+  const el = document.createElement('div');
+  el.className='ocr-overlay'; el.id='ocrOverlay';
+  el.innerHTML=`
+    <div class="ocr-panel">
+      <div class="ocr-panel-title">📷 組み合わせ読み取り結果</div>
+      <div class="ocr-panel-sub">${groups.length}組 / ${totalFound}名を読み取りました</div>
+      ${groups.length===0 ? '<div style="color:#c62828;font-size:13px;">⚠️ 組み合わせを検出できませんでした</div>' : groupRows}
+      <div style="margin-top:8px;">${notFoundRow}</div>
+      <div style="margin-top:12px;">
+        <button class="btn btn-outline btn-sm" style="font-size:11px;padding:4px 10px;width:auto;"
+          onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+          🔍 OCR生テキストを確認（デバッグ用）
+        </button>
+        <pre style="display:none;font-size:10px;background:#f5f5f5;border-radius:8px;padding:10px;margin-top:6px;max-height:160px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;">${safeRaw}</pre>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        ${groups.length>0 ? `<button class="btn btn-primary" onclick="applyOCRPairings('${groupsJson}')">✅ 適用する</button>` : ''}
+        <button class="btn btn-gray" onclick="document.getElementById('ocrOverlay').remove()" style="width:auto;padding:13px 16px;">キャンセル</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+}
+
+function applyOCRPairings(groupsJson) {
+  const groups = typeof groupsJson === 'string' ? JSON.parse(groupsJson.replace(/&quot;/g,'"')) : groupsJson;
+  ui.editGroups = groups;
+  document.getElementById('ocrOverlay')?.remove();
+  render(); showToast(`✅ ${groups.length}組を読み取りました！`);
+}
+
+async function startOCR(mode) {
+  const input = document.createElement('input');
+  input.type='file'; input.accept='image/*';
+  input.onchange = async (e)=>{
+    const file = e.target.files[0]; if (!file) return;
+    showToast('🔍 読み取り中…（数秒かかります）');
+    try {
+      // 両モードとも isTable=true で行単位読み取り
+      const text = await ocrImage(file, true);
+      console.log('=== OCR RAW TEXT ===\n' + text);
+      if (mode==='score') {
+        const matches = parseScoreSheet(text, ui.nr?.pIds||[]);
+        showOCRScorePanel(matches, text);
+      } else {
+        const r = db.rounds.find(x=>x.id===ui.pairingRoundId);
+        const parts = r ? r.results.map(x=>x.playerId) : (ui.nr?.pIds||[]);
+        const groups = parsePairingSheet(text, parts);
+        showOCRPairingPanel(groups, parts, text);
+      }
+    } catch(err) {
+      console.error('OCR error:', err);
+      showToast('⚠️ 読み取りに失敗しました。通信環境を確認してください。');
+    }
+  };
+  input.click();
+}
+
+// =============================================
+//  CSV / JSON
+// =============================================
+function dl(c,f,m){const b=new Blob([c],{type:m}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=f;a.click();setTimeout(()=>URL.revokeObjectURL(u),500);}
+function cr(a){return a.map(v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`).join(',');}
+function expRoundsCSV(){
+  const BOM='\uFEFF',rows=[cr(['タイトル','日付','コース','参加人数','順位','名前','スコア','メダル'])];
+  [...db.rounds].sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>{
+    [...r.results].sort((a,b)=>a.rank-b.rank).forEach(x=>{
+      rows.push(cr([r.title||'',r.date,r.course,r.results.length,x.rank,pname(x.playerId),x.score,x.medal||'']));
+    });
+  });
+  dl(BOM+rows.join('\r\n'),`waigaya_rounds_${today()}.csv`,'text/csv;charset=utf-8');
+}
+function expStatsCSV(){
+  const BOM='\uFEFF',rows=[cr(['名前','R数','WC','J1','J2','J3','保持メダル','平均スコア'])];
+  db.players.forEach(p=>{const s=stats(p.id);rows.push(cr([p.name,s.n,s.wc,s.j1,s.j2,s.j3,holdMedal(p.id)||'',s.avg]));});
+  dl(BOM+rows.join('\r\n'),`waigaya_stats_${today()}.csv`,'text/csv;charset=utf-8');
+}
+function expJSON(){dl(JSON.stringify(db,null,2),`waigaya_backup_${today()}.json`,'application/json');}
+function impJSON(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{try{
+    const d=JSON.parse(e.target.result);
+    if(!Array.isArray(d.players)||!Array.isArray(d.rounds))throw 0;
+    db=d;saveDB(db);alert('データを復元しました！');go('home');
+  }catch{alert('読み込みに失敗しました。');}};
+  reader.readAsText(file,'utf-8');
+}
+function resetAll(){
+  safeAct('resetAll', ()=>{ db={players:[],rounds:[]};saveDB(db);clearDraft();go('home'); }, '⚠️ もう一度タップすると全データが削除されます！');
+}
+
+// =============================================
+//  START
+// =============================================
+// Auto-pull from Firebase on startup
+if (fbUrl) {
+  fbPull(true);
+}
+render();
+</script>
+</body>
+</html>
