@@ -739,26 +739,10 @@ function renderStats() {
       <td>${p.s.avg}</td>
     </tr>`).join('');
 
-  // メダルランキングボード（上位5名）
-  const topMedal=[...sorted].sort((a,b)=>(b.s.wc*10+b.s.j1*3+b.s.j2*2+b.s.j3)-(a.s.wc*10+a.s.j1*3+a.s.j2*2+a.s.j3)).slice(0,5);
-  const medalBoard=topMedal.map((p,i)=>{
-    const icons=[...Array(p.s.wc)].map(()=>'🏆').join('')+[...Array(p.s.j1)].map(()=>'🥇').join('')+[...Array(p.s.j2)].map(()=>'🥈').join('')+[...Array(p.s.j3)].map(()=>'🥉').join('');
-    return `<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid #f0f0f0;" onclick="go('playerStat','${p.id}')" style="cursor:pointer;">
-      <span style="width:20px;color:#999;font-size:12px;">${i+1}</span>
-      <span style="flex:1;font-size:13px;font-weight:600;">${esc(p.name)}</span>
-      <span style="font-size:16px;letter-spacing:1px;">${icons||'—'}</span>
-    </div>`;
-  }).join('');
-
   const inactive=db.players.filter(p=>!stats(p.id).n);
   return `
     <div class="header"><h1>📊 成績一覧</h1></div>
     <div class="content">
-      <div class="card">
-        <div class="card-title">🏅 メダルランキング</div>
-        ${medalBoard}
-        <div style="font-size:10px;color:#bbb;margin-top:6px;text-align:right;">🏆WC 🥇J1 🥈J2 🥉J3</div>
-      </div>
       <div class="card" style="overflow-x:auto;padding:12px 6px;">
         <table class="stats-table">
           <thead><tr><th>名前</th><th>R</th><th>🏆WC</th><th>🥇J1</th><th>🥈J2</th><th>🥉J3</th><th>保持</th><th>平均</th></tr></thead>
