@@ -149,6 +149,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .player-stat-val { font-size: 22px; font-weight: 700; }
 .player-stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
 
+/* ── TITLE SCREEN ── */
+.title-screen { position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;z-index:9999;user-select:none; }
+.title-logo-img { width:82%;max-width:360px;border-radius:12px;animation:titleFadeIn 1.2s ease; }
+.title-logo-text { color:white;font-size:34px;font-weight:900;letter-spacing:2px;text-shadow:0 0 24px #1976D2;animation:titleFadeIn 1.2s ease; }
+.press-start { color:#FFD700;font-size:17px;font-weight:700;letter-spacing:4px;margin-top:48px;animation:blink 1.1s step-end infinite;text-shadow:0 0 12px #FFD700,0 0 24px #FF8C00; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes titleFadeIn { from{opacity:0;transform:scale(0.85)} to{opacity:1;transform:scale(1)} }
+
 /* ── PLAYER ROWS ── */
 .player-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #EEF2FA; gap: 8px; }
 .player-row:last-child { border-bottom: none; }
@@ -438,6 +446,25 @@ function syncStatusBar() {
   };
   const [cls,icon,msg] = map[syncSt]||map.none;
   return `<div class="sync-bar ${cls}">${icon} ${msg}</div>`;
+}
+
+// =============================================
+//  TITLE SCREEN
+// =============================================
+function renderTitle() {
+  const logo = logoUrl
+    ? `<img src="${logoUrl}" class="title-logo-img" />`
+    : `<div class="title-logo-text">⛳ ワイガヤJリーグ</div>`;
+  return `<div class="title-screen" onclick="goHome()">
+    ${logo}
+    <div class="press-start">── PRESS START ──</div>
+  </div>`;
+}
+
+function goHome() {
+  history.pushState({screen:'home'}, '');
+  ui.screen = 'home';
+  render();
 }
 
 // =============================================
@@ -1101,12 +1128,13 @@ function wiz3(sh) {
 // =============================================
 //  RENDER
 // =============================================
-let ui = { screen:'home', viewId:null, nr:null, step:0, editPid:null,
-           pairingRoundId:null, editGroups:[], openGroupIdx:-1 };
+let ui = { screen:'title', viewId:null, nr:null, step:0, editPid:null,
+           pairingRoundId:null, editGroups:[], openGroupIdx:-1, authed:false };
 
 function render() {
   let html='';
   switch(ui.screen) {
+    case 'title':  html=renderTitle(); break;
     case 'home':   html=renderHome(); break;
     case 'detail': html=renderDetail(); break;
     case 'stats':      html=renderStats(); break;
@@ -1704,6 +1732,25 @@ function resetAll(){
 if (fbUrl) {
   fbPull(true);
 }
+
+// 初期ヒストリー設定（バックボタン制御用）
+history.replaceState({screen:'title'}, '');
+history.pushState({screen:'title'}, '');
+
+// ホーム画面でのバックボタン → タイトルに戻るか確認
+window.addEventListener('popstate', function() {
+  if (ui.screen === 'home') {
+    if (confirm('タイトルに戻りますか？')) {
+      ui.screen = 'title';
+      render();
+    } else {
+      history.pushState({screen:'home'}, '');
+    }
+  } else {
+    history.pushState({}, '');
+  }
+});
+
 render();
 </script>
 </body>
