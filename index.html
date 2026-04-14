@@ -454,45 +454,58 @@ function syncStatusBar() {
 // =============================================
 let bgmAudio = null, bgmMuted = false;
 
-// BGMはユーザー操作の中で直接生成・再生する（iOS対応）
 function playBGM() {
-  if (bgmMuted) return;
-  if (bgmAudio) { bgmAudio.play().catch(()=>{}); return; }
-  // iOSは new Audio() と play() を同じ操作の中で呼ぶ必要がある
-  bgmAudio = new Audio('bgm.mp3');
-  bgmAudio.loop = true;
-  bgmAudio.volume = 0.5;
-  bgmAudio.play().catch(e => console.log('BGM:', e));
+  if (!bgmAudio) {
+    bgmAudio = new Audio('bgm.mp3');
+    bgmAudio.loop = true;
+    bgmAudio.volume = 0.5;
+  }
+  bgmAudio.play().catch(()=>{});
 }
 
 function stopBGM() {
   if (bgmAudio) { bgmAudio.pause(); bgmAudio.currentTime = 0; }
 }
 
-function toggleBGM() {
-  bgmMuted = !bgmMuted;
-  if (bgmMuted) { stopBGM(); }
-  else { playBGM(); }
-  document.querySelectorAll('#bgmBtn').forEach(b => b.textContent = bgmMuted ? '🔇' : '🔊');
-}
-
 // =============================================
 //  TITLE SCREEN
 // =============================================
+let titleReady = false;
+
 function renderTitle() {
   const logo = logoUrl
     ? `<img src="${logoUrl}" class="title-logo-img" />`
     : `<div class="title-logo-text">⛳ ワイガヤJリーグ</div>`;
-  return `<div class="title-screen" onclick="goHome()">
+  const msg = titleReady ? '── PRESS START ──' : '── TAP TO START ──';
+  return `<div class="title-screen" onclick="titleTap()">
     ${logo}
-    <div class="press-start">── PRESS START ──</div>
+    <div class="press-start" id="pressStart">${msg}</div>
   </div>`;
 }
 
+function titleTap() {
+  if (!titleReady) {
+    // 1回目のタップ: 音楽スタート・PRESS STARTに切り替え
+    titleReady = true;
+    playBGM();
+    const el = document.getElementById('pressStart');
+    if (el) el.textContent = '── PRESS START ──';
+  } else {
+    // 2回目のタップ: ホームへ
+    goHome();
+  }
+}
+
+function onTitleRendered() {
+  titleReady = false;
+  playBGM(); // PCは自動再生できるのでそのまま再生（失敗しても問題なし）
+}
+
 function goHome() {
+  stopBGM();
+  titleReady = false;
   history.pushState({screen:'home'}, '');
   ui.screen = 'home';
-  playBGM(); // ユーザー操作の中で呼ぶ → iOS制限を回避
   render();
 }
 
@@ -1164,7 +1177,7 @@ let ui = { screen:'title', viewId:null, nr:null, step:0, editPid:null,
 function render() {
   let html='';
   switch(ui.screen) {
-    case 'title':  html=renderTitle(); break;
+    case 'title':  html=renderTitle(); setTimeout(onTitleRendered, 100); break;
     case 'home':   html=renderHome(); break;
     case 'detail': html=renderDetail(); break;
     case 'stats':      html=renderStats(); break;
@@ -1204,9 +1217,6 @@ function go(screen, id) {
     }
     ui.authed = true;
   }
-  // BGM制御: ホーム→他画面で停止、他画面→ホームで再開
-  if (ui.screen === 'home' && screen !== 'home') stopBGM();
-  if (ui.screen !== 'home' && screen === 'home') playBGM();
   if (screen === 'home') ui.authed = false;
   ui.screen=screen; ui.viewId=id||null;
   if (screen!=='wizard') ui.editPid=null;
