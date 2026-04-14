@@ -454,36 +454,25 @@ function syncStatusBar() {
 // =============================================
 let bgmAudio = null, bgmMuted = false;
 
-// タイトル表示時にプリロード（iOSは再生前にロードしておくと安定する）
-function initBGMAudio() {
-  if (bgmAudio) return;
+// BGMはユーザー操作の中で直接生成・再生する（iOS対応）
+function playBGM() {
+  if (bgmMuted) return;
+  if (bgmAudio) { bgmAudio.play().catch(()=>{}); return; }
+  // iOSは new Audio() と play() を同じ操作の中で呼ぶ必要がある
   bgmAudio = new Audio('bgm.mp3');
   bgmAudio.loop = true;
   bgmAudio.volume = 0.5;
-  bgmAudio.preload = 'auto';
-}
-
-function playBGM() {
-  if (bgmMuted) return;
-  initBGMAudio();
-  const p = bgmAudio.play();
-  if (p) p.catch(e => {
-    console.log('BGM blocked:', e);
-    // iOS対応: 次のタッチ操作で再試行
-    const retry = () => { if (bgmAudio && !bgmMuted) bgmAudio.play().catch(()=>{}); };
-    document.addEventListener('touchstart', retry, {once:true});
-    document.addEventListener('click', retry, {once:true});
-  });
+  bgmAudio.play().catch(e => console.log('BGM:', e));
 }
 
 function stopBGM() {
-  if (bgmAudio) { bgmAudio.pause(); bgmAudio.currentTime = 0; bgmAudio = null; }
+  if (bgmAudio) { bgmAudio.pause(); bgmAudio.currentTime = 0; }
 }
 
 function toggleBGM() {
   bgmMuted = !bgmMuted;
-  if (bgmMuted) { if (bgmAudio) bgmAudio.pause(); }
-  else { if (bgmAudio) bgmAudio.play().catch(()=>{}); else playBGM(); }
+  if (bgmMuted) { stopBGM(); }
+  else { playBGM(); }
   document.querySelectorAll('#bgmBtn').forEach(b => b.textContent = bgmMuted ? '🔇' : '🔊');
 }
 
@@ -491,23 +480,19 @@ function toggleBGM() {
 //  TITLE SCREEN
 // =============================================
 function renderTitle() {
-  initBGMAudio(); // タイトル表示と同時にプリロード開始
   const logo = logoUrl
     ? `<img src="${logoUrl}" class="title-logo-img" />`
     : `<div class="title-logo-text">⛳ ワイガヤJリーグ</div>`;
   return `<div class="title-screen" onclick="goHome()">
     ${logo}
     <div class="press-start">── PRESS START ──</div>
-    <div style="position:absolute;bottom:20px;right:20px;" onclick="event.stopPropagation();toggleBGM()">
-      <span id="bgmBtn" style="font-size:24px;cursor:pointer;">${bgmMuted?'🔇':'🔊'}</span>
-    </div>
   </div>`;
 }
 
 function goHome() {
   history.pushState({screen:'home'}, '');
   ui.screen = 'home';
-  playBGM(); // タイトルタップで音楽スタート（ブラウザのオートプレイ制限を回避）
+  playBGM(); // ユーザー操作の中で呼ぶ → iOS制限を回避
   render();
 }
 
@@ -1219,7 +1204,10 @@ function go(screen, id) {
     }
     ui.authed = true;
   }
-  if (screen === 'home') ui.authed = false; // ホームに戻ったら認証リセット
+  // BGM制御: ホーム→他画面で停止、他画面→ホームで再開
+  if (ui.screen === 'home' && screen !== 'home') stopBGM();
+  if (ui.screen !== 'home' && screen === 'home') playBGM();
+  if (screen === 'home') ui.authed = false;
   ui.screen=screen; ui.viewId=id||null;
   if (screen!=='wizard') ui.editPid=null;
   render();
