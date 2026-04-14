@@ -274,7 +274,7 @@ const saveFbUrl = (v)   => lset(FB_KEY, v.trim());
 const DEFAULT_FB_URL = 'https://waigayaleague-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 let db       = loadDB();
-let logoUrl  = loadLogo();
+let logoUrl  = db.logoUrl || loadLogo(); // dbにあればそちらを優先（Firebase共有）
 let fbUrl    = loadFbUrl() || DEFAULT_FB_URL;
 if (!loadFbUrl()) saveFbUrl(DEFAULT_FB_URL); // 未設定端末に自動セット
 let syncSt   = 'none'; // none | syncing | ok | error
@@ -298,6 +298,7 @@ async function fbPull(silent) {
     const data = await res.json();
     if (data && Array.isArray(data.players) && Array.isArray(data.rounds)) {
       db = data;
+      logoUrl = db.logoUrl || ''; // Firebaseからロゴも同期
       saveLocal(db);
       syncSt = 'ok';
       render();
@@ -1327,11 +1328,22 @@ function disconnectCloud() {
 function uploadLogo(input) {
   const file=input.files[0]; if(!file) return;
   const reader=new FileReader();
-  reader.onload=e=>{logoUrl=e.target.result;saveLogo(logoUrl);render();showToast('✅ ロゴを設定しました！');};
+  reader.onload=e=>{
+    logoUrl=e.target.result;
+    db.logoUrl=logoUrl;   // dbに保存してFirebase同期
+    saveDB(db);
+    if(fbUrl) fbPush();
+    render(); showToast('✅ ロゴを設定しました！全端末に反映されます');
+  };
   reader.readAsDataURL(file);
 }
 function deleteLogo() {
-  safeAct('delLogo', ()=>{ logoUrl=''; ldel(LOGO_KEY); render(); }, '⚠️ もう一度タップするとロゴを削除します');
+  safeAct('delLogo', ()=>{
+    logoUrl=''; db.logoUrl='';
+    saveDB(db);
+    if(fbUrl) fbPush();
+    render();
+  }, '⚠️ もう一度タップするとロゴを削除します');
 }
 
 // =============================================
