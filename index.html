@@ -454,39 +454,44 @@ function syncStatusBar() {
 // =============================================
 let bgmAudio = null, bgmMuted = false;
 
+// タイトル表示時にプリロード（iOSは再生前にロードしておくと安定する）
+function initBGMAudio() {
+  if (bgmAudio) return;
+  bgmAudio = new Audio('bgm.mp3');
+  bgmAudio.loop = true;
+  bgmAudio.volume = 0.5;
+  bgmAudio.preload = 'auto';
+}
+
 function playBGM() {
-  if (bgmAudio || bgmMuted) return;
-  try {
-    bgmAudio = new Audio('bgm.mp3');
-    bgmAudio.loop = true;
-    bgmAudio.volume = 0.5;
-    bgmAudio.play().catch(e => console.log('BGM play error:', e));
-  } catch(e) { console.log('BGM error:', e); }
+  if (bgmMuted) return;
+  initBGMAudio();
+  const p = bgmAudio.play();
+  if (p) p.catch(e => {
+    console.log('BGM blocked:', e);
+    // iOS対応: 次のタッチ操作で再試行
+    const retry = () => { if (bgmAudio && !bgmMuted) bgmAudio.play().catch(()=>{}); };
+    document.addEventListener('touchstart', retry, {once:true});
+    document.addEventListener('click', retry, {once:true});
+  });
 }
 
 function stopBGM() {
-  if (bgmAudio) {
-    bgmAudio.pause();
-    bgmAudio.currentTime = 0;
-    bgmAudio = null;
-  }
+  if (bgmAudio) { bgmAudio.pause(); bgmAudio.currentTime = 0; bgmAudio = null; }
 }
 
 function toggleBGM() {
   bgmMuted = !bgmMuted;
-  if (bgmMuted) {
-    if (bgmAudio) bgmAudio.pause();
-  } else {
-    if (bgmAudio) bgmAudio.play();
-    else playBGM();
-  }
-  document.querySelectorAll('#bgmBtn').forEach(btn => btn.textContent = bgmMuted ? '🔇' : '🔊');
+  if (bgmMuted) { if (bgmAudio) bgmAudio.pause(); }
+  else { if (bgmAudio) bgmAudio.play().catch(()=>{}); else playBGM(); }
+  document.querySelectorAll('#bgmBtn').forEach(b => b.textContent = bgmMuted ? '🔇' : '🔊');
 }
 
 // =============================================
 //  TITLE SCREEN
 // =============================================
 function renderTitle() {
+  initBGMAudio(); // タイトル表示と同時にプリロード開始
   const logo = logoUrl
     ? `<img src="${logoUrl}" class="title-logo-img" />`
     : `<div class="title-logo-text">⛳ ワイガヤJリーグ</div>`;
