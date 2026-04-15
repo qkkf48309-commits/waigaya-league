@@ -334,6 +334,7 @@ async function fbPush(silent) {
   if (!ep) return;
   syncSt = 'syncing'; updateSyncUI();
   try {
+    // ロゴはFirebaseに含める（全端末共有のため）
     const res = await fetch(ep, {
       method: 'PUT',
       body: JSON.stringify(db),
@@ -1454,6 +1455,9 @@ function tempSave() {
 function w1next() {
   if (ui.nr.pIds.length<2) { alert('参加者を2名以上選択してください'); return; }
   ui.step=2; render();
+  // 参加者確定時にFirebaseへ共有
+  saveDraft(ui.nr, ui.step);
+  if (fbUrl) fbPush(true);
 }
 function saveScoresThenBack() {
   for (const pid of ui.nr.pIds) {const el=document.getElementById('sc_'+pid);if(el&&el.value) ui.nr.scores[pid]=el.value;}
@@ -1617,8 +1621,11 @@ function savePairings() {
   if (ui.pairingRoundId === null) {
     // ウィザードモード：ui.nr に保存してステップ1に戻る
     ui.nr.pairings = saved;
-    showToast('✅ 組み合わせを設定しました！');
     ui.screen = 'wizard'; render();
+    // Firebaseに即共有
+    saveDraft(ui.nr, ui.step);
+    if (fbUrl) fbPush(true);
+    showToast('✅ 組み合わせを設定しました！メンバーに共有されます');
   } else {
     // 詳細画面モード：ラウンドデータに保存
     const r = db.rounds.find(x=>x.id===ui.pairingRoundId);
