@@ -261,9 +261,17 @@ const lset = (k,v) => { try { localStorage.setItem(k,v); } catch(e){} };
 
 const loadDB    = ()    => jget(DB_KEY, {players:[],rounds:[]});
 const saveLocal = (d)   => jset(DB_KEY, d);
-const loadDraft = ()    => jget(DRAFT_KEY, null);
-const saveDraft = (nr,s)=> jset(DRAFT_KEY, {nr,step:s});
-const clearDraft= ()    => ldel(DRAFT_KEY);
+const loadDraft = ()    => db.draft || jget(DRAFT_KEY, null);
+const saveDraft = (nr,s)=> {
+  const data={nr,step:s};
+  jset(DRAFT_KEY, data);   // ローカル高速キャッシュ
+  db.draft=data; saveLocal(db); // dbにも保存（Firebase同期対象）
+};
+const clearDraft= ()    => {
+  ldel(DRAFT_KEY);
+  db.draft=null; saveLocal(db);
+  if(fbUrl) fbPush(true);  // Firebaseからも削除
+};
 const loadMedal = ()    => jget(MEDAL_KEY, {j1:3,j2:3,j3:3});
 const saveMedal = (m)   => jset(MEDAL_KEY, m);
 const loadLogo  = ()    => lget(LOGO_KEY);
@@ -300,6 +308,8 @@ async function fbPull(silent) {
     if (data && Array.isArray(data.players) && Array.isArray(data.rounds)) {
       db = data;
       logoUrl = db.logoUrl || ''; // Firebaseからロゴも同期
+      if (db.draft) jset(DRAFT_KEY, db.draft); // ローカルキャッシュも更新
+      else ldel(DRAFT_KEY);
       saveLocal(db);
       syncSt = 'ok';
       if (ui.screen === 'loading') ui.screen = 'title'; // 初回ロード完了→タイトルへ
@@ -736,6 +746,7 @@ function renderHome() {
     <div class="draft-banner">
       <div class="draft-banner-title">⏸ 入力途中のラウンドがあります</div>
       <div class="draft-banner-info">${draft.nr.title?esc(draft.nr.title)+' ':''}${esc(draft.nr.course)}（${(draft.nr.date||'').replace(/-/g,'/')}）</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px;">☁️ 一時保存するとメンバー全員に共有されます</div>
       <div class="draft-btns">
         <button class="btn btn-primary" onclick="resumeDraft()">続きから入力</button>
         <button class="btn btn-gray"    onclick="if(confirm('本当に破棄しますか？'))clearDraft(),render()">破棄する</button>
@@ -1345,7 +1356,10 @@ function resumeDraft() {
   ui.screen='wizard'; ui.nr=d.nr; ui.step=d.step||0; render();
 }
 function leaveWizard() {
-  if (ui.nr) saveDraft(ui.nr, ui.step);
+  if (ui.nr) {
+    saveDraft(ui.nr, ui.step);
+    if (fbUrl) fbPush(true); // 他の端末に共有
+  }
   go('home');
 }
 
@@ -1381,8 +1395,9 @@ function adjMedal(key, d) {
   const el=document.getElementById('mc_'+key); if(el) el.textContent=cur;
 }
 function tempSave() {
-  ['j1','j2','j3'].forEach(k=>{const el=document.getElementById('mc_'+k);if(el) ui.nr.medal[k]=parseInt(el.textContent)||0;});
-  saveDraft(ui.nr, ui.step); showToast('💾 一時保存しました！');
+  saveDraft(ui.nr, ui.step);
+  if (fbUrl) fbPush(true);
+  showToast('💾 一時保存しました！メンバーに共有されます');
 }
 function w1next() {
   ['j1','j2','j3'].forEach(k=>{const el=document.getElementById('mc_'+k);if(el) ui.nr.medal[k]=parseInt(el.textContent)||0;});
