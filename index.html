@@ -738,7 +738,7 @@ function renderHome() {
       <div class="draft-banner-info">${draft.nr.title?esc(draft.nr.title)+' ':''}${esc(draft.nr.course)}（${(draft.nr.date||'').replace(/-/g,'/')}）</div>
       <div class="draft-btns">
         <button class="btn btn-primary" onclick="resumeDraft()">続きから入力</button>
-        <button class="btn btn-gray"    onclick="clearDraft();render()">破棄する</button>
+        <button class="btn btn-gray"    onclick="if(confirm('本当に破棄しますか？'))clearDraft(),render()">破棄する</button>
       </div>
     </div>`:'';
   const roundList=rounds.length===0
