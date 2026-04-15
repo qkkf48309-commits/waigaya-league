@@ -833,6 +833,7 @@ function renderHome() {
           <div class="home-hero-sub">全${db.rounds.length}ラウンド・${db.players.length}名登録</div>
         </div>
         <div class="home-hero-right">
+          <button class="sync-btn" onclick="go('help')" title="使い方" style="font-size:15px;">❓</button>
           <button class="sync-btn" id="syncIcon" onclick="fbPull(false)" title="クラウドと同期">☁️</button>
         </div>
       </div>
@@ -999,6 +1000,109 @@ function renderPlayers() {
         ${hasUsed?'<div class="text-xs" style="margin-top:12px;">※ラウンドデータのあるメンバーは削除できません</div>':''}
       </div>
     </div>`;
+}
+
+// =============================================
+//  SCREEN: HELP
+// =============================================
+function renderHelp() {
+  const sections = [
+    {
+      icon:'⛳', title:'ワイガヤJリーグとは',
+      body:`ゴルフリーグの成績・メダル・組み合わせを管理するアプリです。クラウド同期により全メンバーがリアルタイムでデータを共有できます。`
+    },
+    {
+      icon:'➕', title:'ラウンドの追加方法',
+      body:`①ホームの「新しいラウンド」をタップ<br>
+②タイトル（任意）・日付・コース名・スタート時間を入力<br>
+③参加者を選択（組み合わせも設定できます）<br>
+④「一時保存」でメンバー全員に共有されます<br>
+⑤スコアを入力して「結果を確認」<br>
+⑥内容を確認して「この結果を保存する」で完了`
+    },
+    {
+      icon:'🏅', title:'メダルルール',
+      body:`各ラウンドは参加者の<strong>保持メダルを取り合う</strong>形で争います。<br><br>
+🏆 <strong>WC</strong>：1位が獲得<br>
+🥇 <strong>J1</strong>：J1保持者の枠数分<br>
+🥈 <strong>J2</strong>：J2保持者＋メダルなし・初参加の枠数分<br>
+🥉 <strong>J3</strong>：J3保持者の枠数分<br><br>
+❄️ <strong>凍結</strong>：2回連続不参加のメダルは凍結状態になりますが、復帰時に通常通り争われます。`
+    },
+    {
+      icon:'🏌️', title:'組み合わせ表の設定',
+      body:`参加者選択画面の「組み合わせを入力する」から設定できます。<br><br>
+・「＋組を追加する」で組を作成<br>
+・各組にメンバーをタップして割り当て<br>
+・スタート時間は任意で入力できます<br>
+・📷ボタンで案内文書の写真から自動読み取り（β）<br><br>
+「一時保存する」を押すと全メンバーのホーム画面に組み合わせが表示されます。`
+    },
+    {
+      icon:'📷', title:'写真からスコアを読み取る（OCR）',
+      body:`スコア入力画面の「📷 結果表の写真から読み込む」から使用できます。<br><br>
+・結果表を撮影してアップロードするとスコアを自動入力<br>
+・読み取り結果は確認・修正してから適用できます<br>
+・読み取れなかった箇所は手動で入力してください`
+    },
+    {
+      icon:'📊', title:'成績一覧の見方',
+      body:`ホームの「成績一覧」から全メンバーの通算成績を確認できます。<br><br>
+・名前をタップで個人の詳細ページへ<br>
+・個人ページではスコア推移グラフ・ラウンド履歴を表示<br>
+・❄️アイコンは凍結中のメダルを示します`
+    },
+    {
+      icon:'☁️', title:'クラウド同期について',
+      body:`Firebaseを使って全端末でデータをリアルタイム共有しています。<br><br>
+・アプリ起動時に自動で最新データを取得します<br>
+・ホーム右上の☁️ボタンで手動同期できます<br>
+・組み合わせ保存・一時保存時は自動でプッシュされます`
+    },
+    {
+      icon:'💾', title:'データ管理',
+      body:`ホームの「データ管理」からアクセスできます（パスワード：waigaya）。<br><br>
+・<strong>次回大会</strong>：開催日を登録するとホームにカウントダウン表示<br>
+・<strong>ロゴ設定</strong>：ホーム画面のロゴを変更（全端末に共有）<br>
+・<strong>エクスポート</strong>：CSVやJSONでデータをバックアップ<br>
+・<strong>インポート</strong>：バックアップデータを復元`
+    },
+    {
+      icon:'📤', title:'結果のシェア',
+      body:`ラウンド詳細画面の右上📤ボタンを押すと、結果テキストがクリップボードにコピーされます。そのままLINEに貼り付けてメンバーと共有できます。`
+    },
+  ];
+
+  const cards = sections.map((s,i) => `
+    <div style="background:white;border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+      <button onclick="helpToggle(${i})" style="width:100%;display:flex;align-items:center;padding:14px 16px;background:none;border:none;cursor:pointer;text-align:left;">
+        <span style="font-size:22px;margin-right:12px;">${s.icon}</span>
+        <span style="flex:1;font-size:14px;font-weight:700;color:#1A2236;">${s.title}</span>
+        <span id="helpArrow${i}" style="font-size:16px;color:#bbb;transition:transform 0.2s;">›</span>
+      </button>
+      <div id="helpBody${i}" style="display:none;padding:0 16px 14px 50px;font-size:13px;color:#555;line-height:1.7;">${s.body}</div>
+    </div>`).join('');
+
+  return `
+    <div class="header"><div class="header-row">
+      <button class="btn-back" onclick="go('home')">‹</button>
+      <h1>❓ 使い方ガイド</h1>
+      <div style="width:40px;"></div>
+    </div></div>
+    <div class="content">
+      <div class="alert alert-info" style="margin-bottom:14px;">タップで各項目を開閉できます</div>
+      ${cards}
+      <div style="text-align:center;font-size:11px;color:#bbb;margin-top:16px;">ワイガヤJリーグ 管理アプリ</div>
+    </div>`;
+}
+
+function helpToggle(i) {
+  const body = document.getElementById('helpBody'+i);
+  const arrow = document.getElementById('helpArrow'+i);
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  if (arrow) arrow.style.transform = open ? 'rotate(90deg)' : '';
 }
 
 // =============================================
@@ -1378,6 +1482,7 @@ function render() {
     case 'playerStat': html=renderPlayerStat(); break;
     case 'player':     html=renderPlayers(); break;
     case 'backup': html=renderBackup(); break;
+    case 'help':   html=renderHelp(); break;
     case 'wizard':   html=renderWizard(); break;
     case 'pairings': html=renderPairingsEditor(); break;
     default:       html=renderHome();
