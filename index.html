@@ -1332,6 +1332,10 @@ function go(screen, id) {
   render();
 }
 function startNew() {
+  if (loadDraft()?.nr?.course) {
+    showToast('⚠️ 入力途中のラウンドがあります。先に完了するか破棄してください。');
+    return;
+  }
   ui.screen='wizard';
   ui.nr={date:today(),title:'',course:'',pIds:[],scores:{},medal:{...loadMedal()},pairings:[]};
   ui.step=0; render();
