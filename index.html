@@ -739,19 +739,58 @@ function clearNextEvent() {
 // =============================================
 //  SCREEN: HOME
 // =============================================
+function buildDraftBanner(nr) {
+  const hasPairings = (nr.pairings||[]).length > 0 && (nr.pIds||[]).length > 0;
+
+  // 組み合わせ表（保持メダル入り）
+  let pairingsHtml = '';
+  if (hasPairings) {
+    const groupRows = nr.pairings.map(function(g, i) {
+      const members = (g.playerIds||[]).map(function(pid) {
+        const info = playerMedalInfo(pid);
+        const medalBadge = info.medal ? mb(info.medal, true, info.frozen) : '';
+        return '<span style="margin-right:8px;">' + esc(pname(pid)) + medalBadge + '</span>';
+      }).join('');
+      const label = g.time ? ('⏰' + g.time) : ('第' + (i+1) + '組');
+      return '<div style="padding:7px 10px;background:#fffbf0;border-radius:8px;margin-bottom:5px;font-size:13px;">'
+        + '<span style="font-weight:700;color:#E65100;margin-right:8px;">' + label + '</span>'
+        + members + '</div>';
+    }).join('');
+    pairingsHtml = '<div style="margin:10px 0 6px;font-size:12px;font-weight:700;color:#555;">🏌️ 組み合わせ</div>' + groupRows;
+  }
+
+  // 争うメダル数
+  let medalsHtml = '';
+  if (hasPairings) {
+    const cfg = computeMedalConfig(nr.pIds);
+    const items = [{e:'🏆',k:'WC',n:1},{e:'🥇',k:'J1',n:cfg.j1},{e:'🥈',k:'J2',n:cfg.j2},{e:'🥉',k:'J3',n:cfg.j3}].filter(function(x){return x.n>0;});
+    const badges = items.map(function(x){
+      return '<span style="background:#f0f7ff;border:1px solid #BBDEFB;border-radius:16px;padding:3px 10px;font-size:13px;font-weight:700;">' + x.e + x.k + '×' + x.n + '</span>';
+    }).join('');
+    medalsHtml = '<div style="margin:8px 0 4px;font-size:12px;font-weight:700;color:#555;">🏅 今回争うメダル</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">' + badges + '</div>';
+  }
+
+  const startInfo = nr.startTime ? '　⏰ ' + nr.startTime + ' スタート' : '';
+  const btnLabel = hasPairings ? 'スコアを入力する' : '続きから入力';
+
+  return '<div class="draft-banner">'
+    + '<div class="draft-banner-title">⏸ 次回ラウンド準備中</div>'
+    + '<div class="draft-banner-info">' + (nr.title ? esc(nr.title) + ' ' : '') + esc(nr.course)
+    + '（' + (nr.date||'').replace(/-/g,'/') + '）'
+    + (nr.pIds && nr.pIds.length ? '　' + nr.pIds.length + '名' : '') + startInfo + '</div>'
+    + pairingsHtml + medalsHtml
+    + '<div style="font-size:11px;color:#888;margin-bottom:10px;">☁️ 一時保存するとメンバー全員に共有されます</div>'
+    + '<div class="draft-btns">'
+    + '<button class="btn btn-primary" onclick="resumeDraft()">' + btnLabel + '</button>'
+    + '<button class="btn btn-gray" onclick="if(confirm(\'本当に破棄しますか？\'))clearDraft(),render()">破棄する</button>'
+    + '</div></div>';
+}
+
 function renderHome() {
   const rounds=[...db.rounds].sort((a,b)=>b.date.localeCompare(a.date));
   const draft=loadDraft();
-  const draftBanner=(draft&&draft.nr&&draft.nr.course)?`
-    <div class="draft-banner">
-      <div class="draft-banner-title">⏸ 入力途中のラウンドがあります</div>
-      <div class="draft-banner-info">${draft.nr.title?esc(draft.nr.title)+' ':''}${esc(draft.nr.course)}（${(draft.nr.date||'').replace(/-/g,'/')}）</div>
-      <div style="font-size:11px;color:#888;margin-bottom:10px;">☁️ 一時保存するとメンバー全員に共有されます</div>
-      <div class="draft-btns">
-        <button class="btn btn-primary" onclick="resumeDraft()">続きから入力</button>
-        <button class="btn btn-gray"    onclick="if(confirm('本当に破棄しますか？'))clearDraft(),render()">破棄する</button>
-      </div>
-    </div>`:'';
+  const draftBanner=(draft&&draft.nr&&draft.nr.course) ? buildDraftBanner(draft.nr) : '';
   const roundList=rounds.length===0
     ?`<div class="empty-state"><div class="empty-icon">⛳</div><div class="empty-msg">まだラウンドがありません</div><div class="empty-sub">下の「＋ 新しいラウンド」から追加しよう！</div></div>`
     :rounds.map(r=>{
@@ -1181,6 +1220,8 @@ function wiz0(sh) {
         <input type="date" id="rDate" class="form-input" value="${nr.date||today()}" /></div>
       <div class="form-group"><label class="form-label">コース名</label>
         <input type="text" id="rCourse" class="form-input" placeholder="例: ○○カントリークラブ" value="${esc(nr.course||'')}" /></div>
+      <div class="form-group"><label class="form-label">最初のスタート時間（任意）</label>
+        <input type="time" id="rStartTime" class="form-input" value="${nr.startTime||''}" /></div>
     </div>
     <button class="btn btn-primary" onclick="w0next()">次へ ›</button></div>`;
 }
@@ -1253,6 +1294,7 @@ function wiz1(sh) {
 }
 function wiz2(sh) {
   const nr=ui.nr;
+  if (!nr.scores) nr.scores = {}; // scoresがundefinedの場合を防ぐ
   const rows=nr.pIds.map(pid=>`
     <div class="score-row">
       <span class="score-name">${esc(pname(pid))}</span>
@@ -1295,6 +1337,7 @@ let ui = { screen:'loading', viewId:null, nr:null, step:0, editPid:null,
 
 function render() {
   let html='';
+  try {
   switch(ui.screen) {
     case 'loading': html=`<div style="position:fixed;inset:0;background:#000;"></div>`; break;
     case 'title':  html=renderTitle(); setTimeout(onTitleRendered, 100); break;
@@ -1307,6 +1350,10 @@ function render() {
     case 'wizard':   html=renderWizard(); break;
     case 'pairings': html=renderPairingsEditor(); break;
     default:       html=renderHome();
+  }
+  } catch(e) {
+    console.error('render error:', e);
+    html = '<div style="padding:20px;color:red;font-size:13px;">⚠️ 表示エラー: ' + esc(String(e)) + '</div>';
   }
   if (ui.screen==='wizard' && ui.nr) saveDraft(ui.nr, ui.step);
   const showNav=ui.screen!=='wizard' && ui.screen!=='pairings';
@@ -1353,7 +1400,11 @@ function startNew() {
 }
 function resumeDraft() {
   const d=loadDraft(); if(!d) return;
-  ui.screen='wizard'; ui.nr=d.nr; ui.step=d.step||0; render();
+  ui.nr=d.nr;
+  if (!ui.nr.scores) ui.nr.scores={};   // 念のため初期化
+  if (!ui.nr.pIds) ui.nr.pIds=[];
+  if (!ui.nr.pairings) ui.nr.pairings=[];
+  ui.screen='wizard'; ui.step=d.step||0; render();
 }
 function leaveWizard() {
   if (ui.nr) {
@@ -1370,9 +1421,10 @@ function w0next() {
   const title=document.getElementById('rTitle').value.trim();
   const date=document.getElementById('rDate').value;
   const course=document.getElementById('rCourse').value.trim();
+  const startTime=document.getElementById('rStartTime')?.value||'';
   if (!date) { alert('日付を選択してください'); return; }
   if (!course) { alert('コース名を入力してください'); return; }
-  ui.nr.title=title; ui.nr.date=date; ui.nr.course=course;
+  ui.nr.title=title; ui.nr.date=date; ui.nr.course=course; ui.nr.startTime=startTime;
   ui.step=1; render();
 }
 function toggle(pid) {
@@ -1400,10 +1452,7 @@ function tempSave() {
   showToast('💾 一時保存しました！メンバーに共有されます');
 }
 function w1next() {
-  ['j1','j2','j3'].forEach(k=>{const el=document.getElementById('mc_'+k);if(el) ui.nr.medal[k]=parseInt(el.textContent)||0;});
   if (ui.nr.pIds.length<2) { alert('参加者を2名以上選択してください'); return; }
-  const {j1,j2,j3}=ui.nr.medal, tot=1+j1+j2+j3;
-  if (tot>ui.nr.pIds.length) { alert(`メダル合計（${tot}枚）が参加者数（${ui.nr.pIds.length}名）を超えています。`); return; }
   ui.step=2; render();
 }
 function saveScoresThenBack() {
