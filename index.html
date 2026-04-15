@@ -451,7 +451,7 @@ function holdMedal(pid) {
 }
 
 // 参加者の保持メダルからラウンドのメダル枚数を自動計算
-// メダルなし（初参加含む）はJ3として計算
+// メダルなし（初参加含む）はJ2として計算
 function computeMedalConfig(pIds) {
   let j1=0, j2=0, j3=0;
   for (const pid of pIds) {
@@ -459,7 +459,7 @@ function computeMedalConfig(pIds) {
     if (medal==='J1') j1++;
     else if (medal==='J2') j2++;
     else if (medal==='J3') j3++;
-    else if (!medal) j3++; // 初参加・メダルなし → J3扱い
+    else if (!medal) j2++; // 初参加・メダルなし → J2扱い
     // WCは常に1位が獲得（枚数固定）
   }
   return {j1, j2, j3};
@@ -776,7 +776,7 @@ function buildDraftBanner(nr) {
   const btnLabel = hasPairings ? 'スコアを入力する' : '続きから入力';
 
   return '<div class="draft-banner">'
-    + '<div class="draft-banner-title">⏸ 次回ラウンド準備中</div>'
+    + '<div class="draft-banner-title">⏸ 次回ラウンド</div>'
     + '<div class="draft-banner-info">' + (nr.title ? esc(nr.title) + ' ' : '') + esc(nr.course)
     + '（' + (nr.date||'').replace(/-/g,'/') + '）'
     + (nr.pIds && nr.pIds.length ? '　' + nr.pIds.length + '名' : '') + startInfo + '</div>'
@@ -952,7 +952,7 @@ function renderStats() {
         <strong>【メダルルール】</strong><br>
         各ラウンドは参加者の保持メダルを取り合う形で争います。<br>
         ❄️ = 2回連続不参加で凍結中（復帰時は通常通り争います）<br>
-        初参加・メダルなしの選手はJ3として計算されます。
+        初参加・メダルなしの選手はJ2として計算されます。
       </div>
       ${inactive.length?`<div class="text-sm">未参加: ${inactive.map(p=>esc(p.name)).join(' / ')}</div>`:''}
     </div>`;
@@ -1255,9 +1255,9 @@ function wiz1(sh) {
     const noRow=noMedal.length?`<div style="display:flex;align-items:center;padding:7px 0;font-size:13px;">
       <span style="width:28px;font-size:16px;">🥉</span>
       <span style="flex:1;color:#666;">${noMedal.map(pid=>esc(pname(pid))).join('、')}</span>
-      <span style="font-size:11px;background:#EFEBE9;color:#4E342E;padding:2px 8px;border-radius:10px;">初参加/メダルなし→J3</span>
+      <span style="font-size:11px;background:#E8F5E9;color:#2E7D32;padding:2px 8px;border-radius:10px;">初参加/メダルなし→J2</span>
     </div>`:'';
-    return rows.join('')+noRow||'<div style="color:#bbb;font-size:13px;padding:8px 0;">全員メダルなし（全員J3として計算）</div>';
+    return rows.join('')+noRow||'<div style="color:#bbb;font-size:13px;padding:8px 0;">全員メダルなし（全員J2として計算）</div>';
   })();
   const pCount = (nr.pairings||[]).length;
   const pairingBtn = sel.length >= 2
@@ -1312,12 +1312,42 @@ function wiz3(sh) {
   const nr=ui.nr;
   const results=calcResults(nr.pIds.map(pid=>({playerId:pid,score:parseInt(nr.scores[pid])})), computeMedalConfig(nr.pIds), lastRoundResults(null));
   ui.nr._computed=results;
-  const rows=[...results].sort((a,b)=>a.rank-b.rank).map(r=>`
-    <div class="result-row">
+
+  const medalOrder = {WC:0, J1:1, J2:2, J3:3};
+  const mIcon = {WC:'🏆', J1:'🥇', J2:'🥈', J3:'🥉'};
+
+  const rows=[...results].sort((a,b)=>a.rank-b.rank).map(r=>{
+    const oldInfo = playerMedalInfo(r.playerId);
+    const oldMedal = oldInfo.medal;
+    const newMedal = r.medal;
+
+    // メダル変化を計算
+    let changeBadge = '';
+    if (oldMedal !== newMedal) {
+      if (!oldMedal && newMedal) {
+        // 初めてメダル獲得
+        changeBadge = `<span style="font-size:11px;background:#E8F5E9;color:#1B5E20;padding:2px 8px;border-radius:10px;margin-left:6px;">🆕 初獲得</span>`;
+      } else if (oldMedal && !newMedal) {
+        // メダル喪失
+        changeBadge = `<span style="font-size:11px;background:#FFEBEE;color:#B71C1C;padding:2px 8px;border-radius:10px;margin-left:6px;">${mIcon[oldMedal]}${oldMedal}→なし</span>`;
+      } else if (oldMedal && newMedal) {
+        const upgraded = medalOrder[newMedal] < medalOrder[oldMedal];
+        const color = upgraded ? '#1B5E20' : '#B71C1C';
+        const bg = upgraded ? '#E8F5E9' : '#FFEBEE';
+        changeBadge = `<span style="font-size:11px;background:${bg};color:${color};padding:2px 8px;border-radius:10px;margin-left:6px;">${mIcon[oldMedal]}${oldMedal}→${mIcon[newMedal]}${newMedal}</span>`;
+      }
+    } else if (oldMedal && oldInfo.frozen) {
+      // 凍結から復帰して同じメダルを保持
+      changeBadge = `<span style="font-size:11px;background:#E3F2FD;color:#1565C0;padding:2px 8px;border-radius:10px;margin-left:6px;">❄️復帰 ${mIcon[newMedal]}${newMedal}継続</span>`;
+    }
+
+    return `<div class="result-row">
       <span class="rank-num">${r.rank}</span>${mb(r.medal)}
-      <span class="result-name">${esc(pname(r.playerId))}</span>
+      <span class="result-name" style="flex:1;">${esc(pname(r.playerId))}${changeBadge}</span>
       <span class="result-score">${r.score}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+
   return `${wizHdr('結果確認','ui.step=2;render()')}
     <div class="content">${sh}
       <div class="card">
