@@ -1409,8 +1409,19 @@ function wiz2(sh) {
     <div class="content">${sh}
       <button class="btn btn-outline" onclick="startOCR('score')" style="width:100%;margin-bottom:10px;">📷 結果表の写真から読み込む（β）</button>
       <div class="card">${rows}</div>
+      <button class="btn btn-outline" onclick="saveScoresTemp()" style="width:100%;margin-bottom:10px;">💾 一時保存する</button>
       <button class="btn btn-primary" onclick="w2next()">結果を確認 ›</button>
     </div>`;
+}
+function saveScoresTemp() {
+  for (const pid of ui.nr.pIds) {
+    const el = document.getElementById('sc_'+pid);
+    if (el) {
+      if (el.value) ui.nr.scores[pid] = el.value;
+      else delete ui.nr.scores[pid];
+    }
+  }
+  tempSave();
 }
 function wiz3(sh) {
   const nr=ui.nr;
@@ -1595,7 +1606,10 @@ function w1next() {
   if (fbUrl) fbPush(true);
 }
 function saveScoresThenBack() {
-  for (const pid of ui.nr.pIds) {const el=document.getElementById('sc_'+pid);if(el&&el.value) ui.nr.scores[pid]=el.value;}
+  for (const pid of ui.nr.pIds) {
+    const el=document.getElementById('sc_'+pid);
+    if (el) { if (el.value) ui.nr.scores[pid]=el.value; else delete ui.nr.scores[pid]; }
+  }
   ui.step=1; render();
 }
 function w2next() {
