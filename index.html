@@ -56,6 +56,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .tile-sub { font-size: 11px; color: rgba(255,255,255,0.75); text-align: center; }
 .tile-wide { grid-column: 1 / -1; padding: 16px 20px; flex-direction: row; justify-content: center; gap: 14px; }
 .tile-wide .tile-icon { font-size: 28px; }
+.btn-admin { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.25); font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 8px; cursor: pointer; letter-spacing: 0.5px; }
+.btn-admin:active { opacity: 0.7; }
 
 /* ── HOME HEADER HERO ── */
 .home-hero { background: linear-gradient(135deg, #1565C0 0%, #1976D2 60%, #2196F3 100%); padding: 20px 16px 28px; color: white; }
@@ -818,7 +820,7 @@ function renderHome() {
     const ev = new Date(db.nextEvent.date);
     const diff = Math.ceil((ev - today) / (1000*60*60*24));
     if (diff >= 0) countdownBanner = `
-      <div class="countdown-card" onclick="go('backup')" style="cursor:pointer;">
+      <div class="countdown-card" onclick="go('admin')" style="cursor:pointer;">
         <div style="font-size:11px;opacity:0.8;margin-bottom:2px;">⛳ ${db.nextEvent.title?esc(db.nextEvent.title)+' ':'次回大会 '}${db.nextEvent.date.replace(/-/g,'/')}</div>
         <div><span class="countdown-days">${diff}</span><span style="font-size:15px;margin-left:6px;">日後</span></div>
       </div>`;
@@ -846,14 +848,9 @@ function renderHome() {
           <span class="tile-icon">📊</span>
           <span class="tile-label">成績一覧</span>
         </button>
-        <button class="tile" onclick="go('player')">
-          <span class="tile-icon">👥</span>
-          <span class="tile-label">メンバー管理</span>
-        </button>
-        <button class="tile" onclick="go('backup')">
-          <span class="tile-icon">💾</span>
-          <span class="tile-label">データ管理</span>
-        </button>
+      </div>
+      <div style="text-align:right;margin-top:-10px;margin-bottom:14px;">
+        <button class="btn-admin" onclick="go('admin')">🔐 管理者</button>
       </div>
     </div>
     <div class="home-content">
@@ -987,7 +984,10 @@ function renderPlayers() {
     }).join('');
   const hasUsed=db.players.some(p=>db.rounds.some(r=>r.results.some(x=>x.playerId===p.id)));
   return `
-    <div class="header"><h1>👥 メンバー管理</h1></div>
+    <div class="header"><div class="header-row">
+      <button class="btn-back" onclick="go('admin')">‹</button>
+      <h1>👥 メンバー管理</h1><div style="width:40px;"></div>
+    </div></div>
     <div class="content">
       <div class="card">
         <div class="card-title">メンバーを追加</div>
@@ -1106,13 +1106,98 @@ function helpToggle(i) {
 }
 
 // =============================================
+//  SCREEN: EDIT RESULT (管理者用メダル修正)
+// =============================================
+function renderEditResult() {
+  const r = db.rounds.find(x=>x.id===ui.viewId);
+  if (!r) return `<div class="content"><div class="empty-state"><div class="empty-msg">データが見つかりません</div></div></div>`;
+  const medals = ['WC','J1','J2','J3',''];
+  const mLabel = {WC:'🏆 WC', J1:'🥇 J1', J2:'🥈 J2', J3:'🥉 J3', '':'なし'};
+  const rows = [...r.results].sort((a,b)=>a.rank-b.rank).map(x=>`
+    <div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #EEF2FA;gap:8px;">
+      <span style="width:28px;color:#888;font-size:13px;">${x.rank}位</span>
+      <span style="flex:1;font-weight:600;">${esc(pname(x.playerId))}</span>
+      <select id="med_${x.playerId}" class="form-input form-input-sm" style="width:110px;">
+        ${medals.map(m=>`<option value="${m}" ${x.medal===m||(!x.medal&&m==='')?'selected':''}>${mLabel[m]}</option>`).join('')}
+      </select>
+    </div>`).join('');
+  return `
+    <div class="header"><div class="header-row">
+      <button class="btn-back" onclick="go('admin')">‹</button>
+      <div style="flex:1;min-width:0;">
+        <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title?esc(r.title)+' ':''}${esc(r.course)}</h1>
+        <div class="header-sub">${r.date.replace(/-/g,'/')} ・メダル修正</div>
+      </div>
+      <div style="width:40px;"></div>
+    </div></div>
+    <div class="content">
+      <div class="card">
+        <div class="card-title">メダルを修正</div>
+        ${rows}
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="saveResultMedals('${r.id}')">💾 保存する</button>
+      </div>
+    </div>`;
+}
+
+function saveResultMedals(roundId) {
+  const r = db.rounds.find(x=>x.id===roundId);
+  if (!r) return;
+  for (const x of r.results) {
+    const el = document.getElementById('med_'+x.playerId);
+    if (el) x.medal = el.value || null;
+  }
+  saveLocal(db);
+  if (fbUrl) fbPush(true);
+  showToast('✅ メダルを保存しました');
+  go('admin');
+}
+
+// =============================================
+//  SCREEN: ADMIN MENU
+// =============================================
+function renderAdmin() {
+  return `
+    <div class="header"><div class="header-row">
+      <button class="btn-back" onclick="go('home')">‹</button>
+      <h1>🔐 管理者メニュー</h1>
+      <div style="width:40px;"></div>
+    </div></div>
+    <div class="content">
+      <div class="card">
+        <div class="card-title">管理メニュー</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+          <button class="btn btn-outline" onclick="go('player')" style="justify-content:flex-start;gap:12px;">
+            <span style="font-size:20px;">👥</span> メンバー管理
+          </button>
+          <button class="btn btn-outline" onclick="go('backup')" style="justify-content:flex-start;gap:12px;">
+            <span style="font-size:20px;">💾</span> データ管理
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">ラウンド結果の修正</div>
+        <div class="text-xs" style="margin-bottom:10px;">過去のラウンドを選択してメダルを修正できます</div>
+        ${[...db.rounds].sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`
+          <div class="round-card" onclick="go('editResult','${r.id}')" style="cursor:pointer;">
+            <div class="round-info">
+              ${r.title?`<span class="round-title-tag">${esc(r.title)}</span><br>`:''}
+              <div class="round-date">${r.date.replace(/-/g,'/')}</div>
+              <div class="round-course">${esc(r.course)}</div>
+            </div>
+            <span class="round-arrow">✏️</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// =============================================
 //  SCREEN: BACKUP / SETTINGS
 // =============================================
 function renderBackup() {
   const connected = !!fbUrl;
   return `
     <div class="header"><div class="header-row">
-      <button class="btn-back" onclick="go('home')">‹</button>
+      <button class="btn-back" onclick="go('admin')">‹</button>
       <h1>💾 データ管理</h1><div style="width:40px;"></div>
     </div></div>
     <div class="content">
@@ -1491,6 +1576,8 @@ function render() {
     case 'detail': html=renderDetail(); break;
     case 'stats':      html=renderStats(); break;
     case 'playerStat': html=renderPlayerStat(); break;
+    case 'admin':      html=renderAdmin(); break;
+    case 'editResult': html=renderEditResult(); break;
     case 'player':     html=renderPlayers(); break;
     case 'backup': html=renderBackup(); break;
     case 'help':   html=renderHelp(); break;
@@ -1519,17 +1606,22 @@ function render() {
 // =============================================
 //  NAVIGATION
 // =============================================
-const PROTECTED_SCREENS = ['player', 'backup'];
+const PROTECTED_SCREENS = ['admin'];
 const APP_PASSWORD = 'waigaya';
 
 function go(screen, id) {
+  // 管理者画面はパスワード認証
   if (PROTECTED_SCREENS.includes(screen) && !ui.authed) {
-    const pw = prompt('🔒 パスワードを入力してください');
+    const pw = prompt('🔒 管理者パスワードを入力してください');
     if (pw !== APP_PASSWORD) {
       if (pw !== null) showToast('⚠️ パスワードが違います');
       return;
     }
     ui.authed = true;
+  }
+  // player/backupは管理者認証済みでのみアクセス可
+  if (['player','backup'].includes(screen) && !ui.authed) {
+    go('admin'); return;
   }
   if (screen === 'home') ui.authed = false;
   ui.screen=screen; ui.viewId=id||null;
