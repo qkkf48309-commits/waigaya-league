@@ -491,66 +491,24 @@ function syncStatusBar() {
 // =============================================
 //  BGM（MP3ファイル再生）
 // =============================================
-let bgmCtx = null, bgmLoopTimer = null;
+let bgmAudio = null;
 
 function playBGM() {
-  if (bgmCtx) return;
+  if (bgmAudio) return;
   try {
-    bgmCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const BPM = 128, Q = 60 / BPM;
-    const master = bgmCtx.createGain(); master.gain.value = 0.38; master.connect(bgmCtx.destination);
-    const mG = bgmCtx.createGain(); mG.gain.value = 0.55; mG.connect(master);
-    const bG = bgmCtx.createGain(); bG.gain.value = 0.30; bG.connect(master);
-    const hG = bgmCtx.createGain(); hG.gain.value = 0.20; hG.connect(master);
-    const F = {
-      C3:130.81,G3:196,A3:220,F3:174.61,
-      C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392,A4:440,B4:493.88,
-      C5:523.25,D5:587.33,E5:659.25,F5:698.46,G5:783.99,A5:880,B5:987.77,C6:1046.5
-    };
-    const mel = [
-      [F.E5,0,.5],[F.G5,.5,.5],[F.A5,1,1],[F.G5,2,.5],[F.E5,2.5,.5],[F.C5,3,1],
-      [F.D5,4,.5],[F.F5,4.5,.5],[F.G5,5,1],[F.A5,6,.5],[F.G5,6.5,.25],[F.F5,6.75,.25],[F.E5,7,1],
-      [F.C5,8,.5],[F.E5,8.5,.5],[F.G5,9,.5],[F.C6,9.5,.5],
-      [F.B5,10,.25],[F.A5,10.25,.25],[F.G5,10.5,.25],[F.F5,10.75,.25],[F.E5,11,1],
-      [F.G5,12,.5],[F.A5,12.5,.5],[F.G5,13,.5],[F.E5,13.5,.5],
-      [F.C5,14,.5],[F.D5,14.5,.5],[F.E5,15,.75],[F.C5,15.75,.25],
-    ];
-    const har = [
-      [F.C5,0,.5],[F.E5,.5,.5],[F.F5,1,1],[F.E5,2,.5],[F.C5,2.5,.5],[F.A4,3,1],
-      [F.B4,4,.5],[F.D5,4.5,.5],[F.E5,5,1],[F.F5,6,.5],[F.E5,6.5,.5],[F.C5,7,1],
-      [F.A4,8,.5],[F.C5,8.5,.5],[F.E5,9,.5],[F.A5,9.5,.5],
-      [F.G5,10,.5],[F.F5,10.5,.5],[F.C5,11,1],
-      [F.E5,12,.5],[F.F5,12.5,.5],[F.E5,13,.5],[F.C5,13.5,.5],
-      [F.A4,14,.5],[F.B4,14.5,.5],[F.C5,15,1],
-    ];
-    const bas = [
-      [F.C3,0,2],[F.G3,2,2],[F.A3,4,2],[F.F3,6,2],
-      [F.C3,8,2],[F.G3,10,2],[F.F3,12,2],[F.G3,14,1],[F.C3,15,1],
-    ];
-    const totalBeats = 16;
-    function note(f,sb,db,type,gain,t0) {
-      const osc=bgmCtx.createOscillator(), g=bgmCtx.createGain();
-      osc.connect(g); g.connect(gain); osc.type=type; osc.frequency.value=f;
-      const t=t0+sb*Q, e=t+db*Q*0.82;
-      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(1,t+0.015);
-      g.gain.setValueAtTime(1,e-0.04); g.gain.linearRampToValueAtTime(0,e);
-      osc.start(t); osc.stop(e+0.05);
-    }
-    function loop(t0) {
-      if (!bgmCtx) return;
-      mel.forEach(([f,s,d])=>note(f,s,d,'triangle',mG,t0));
-      har.forEach(([f,s,d])=>note(f,s,d,'sine',hG,t0));
-      bas.forEach(([f,s,d])=>note(f,s,d,'sine',bG,t0));
-      bgmLoopTimer=setTimeout(()=>loop(t0+totalBeats*Q),(totalBeats*Q-0.15)*1000);
-    }
-    loop(bgmCtx.currentTime+0.08);
-  } catch(e) { console.log('BGM error:',e); }
+    bgmAudio = new Audio('bgm_main.mp3');
+    bgmAudio.loop = true;
+    bgmAudio.volume = 0.5;
+    bgmAudio.play().catch(e => console.log('BGM error:', e));
+  } catch(e) { console.log('BGM error:', e); }
 }
 
 function stopBGM() {
-  if (bgmLoopTimer) clearTimeout(bgmLoopTimer);
-  bgmLoopTimer = null;
-  if (bgmCtx) { try { bgmCtx.close(); } catch(e){} bgmCtx = null; }
+  if (bgmAudio) {
+    bgmAudio.pause();
+    bgmAudio.currentTime = 0;
+    bgmAudio = null;
+  }
 }
 
 // =============================================
