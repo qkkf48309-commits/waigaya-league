@@ -533,7 +533,7 @@ function titleTap() {
     // 1回目のタップ: 音楽スタート・PRESS STARTに切り替え
     titleReady = true;
     stopBGM(); // 前回の残骸をリセット
-    playBGM();
+    // playBGM(); // BGM一時停止中
     const el = document.getElementById('pressStart');
     if (el) el.textContent = '── PRESS START ──';
   } else {
