@@ -80,6 +80,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .round-date { font-size: 12px; color: var(--text2); }
 .round-course { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .round-meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.round-changes { font-size: 11px; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 5px; }
+.medal-up { color: #2E7D32; font-weight: 600; }
+.medal-down { color: #C62828; font-weight: 600; }
 .round-arrow { color: var(--primary-light); font-size: 20px; font-weight: 300; }
 
 /* ── BUTTONS ── */
@@ -748,6 +751,26 @@ function buildDraftBanner(nr) {
     + '</div></div>';
 }
 
+function getMedalChanges(round, allRounds) {
+  const order = {WC:0, J1:1, J2:2, J3:3};
+  const asc = [...allRounds].sort((a,b) => a.date.localeCompare(b.date));
+  const idx = asc.findIndex(r => r.id === round.id);
+  const changes = [];
+  for (const res of round.results) {
+    const pid = res.playerId;
+    const cur = res.medal || null;
+    let prev = null;
+    for (let i = idx - 1; i >= 0; i--) {
+      const pr = asc[i].results.find(x => x.playerId === pid);
+      if (pr) { prev = pr.medal || null; break; }
+    }
+    if (prev === null || cur === prev) continue;
+    const po = order[prev] ?? 99, co = order[cur] ?? 99;
+    changes.push({ name: pname(pid), from: prev||'圏外', to: cur||'圏外', dir: co < po ? 'up' : 'down' });
+  }
+  return changes;
+}
+
 function renderHome() {
   const rounds=[...db.rounds].sort((a,b)=>b.date.localeCompare(a.date));
   const draft=loadDraft();
@@ -756,12 +779,18 @@ function renderHome() {
     ?`<div class="empty-state"><div class="empty-icon">⛳</div><div class="empty-msg">まだラウンドがありません</div><div class="empty-sub">下の「＋ 新しいラウンド」から追加しよう！</div></div>`
     :rounds.map(r=>{
       const wc=r.results.find(x=>x.medal==='WC');
+      const changes=getMedalChanges(r, db.rounds);
+      const changesHtml=changes.length===0?'':
+        `<div class="round-changes">${changes.map(c=>
+          `<span class="medal-${c.dir}">${c.dir==='up'?'↑':'↓'} ${esc(c.name)} ${c.from}→${c.to}</span>`
+        ).join('')}</div>`;
       return `<div class="round-card" onclick="go('detail','${r.id}')">
         <div class="round-info">
           ${r.title?`<span class="round-title-tag">${esc(r.title)}</span><br>`:''}
           <div class="round-date">${r.date.replace(/-/g,'/')}</div>
           <div class="round-course">${esc(r.course)}</div>
           <div class="round-meta">${r.results.length}名参加　🏆 ${wc?esc(pname(wc.playerId)):'-'}</div>
+          ${changesHtml}
         </div>
         <span class="round-arrow">›</span>
       </div>`;
@@ -826,12 +855,26 @@ function renderDetail() {
   const r=db.rounds.find(x=>x.id===ui.viewId);
   if (!r) return `<div class="content"><div class="empty-state"><div class="empty-msg">データが見つかりません</div></div></div>`;
   const {j1=0,j2=0,j3=0}=r.medalConfig;
-  const rows=[...r.results].sort((a,b)=>a.rank-b.rank).map(x=>`
-    <div class="result-row">
+  const mOrd={WC:0,J1:1,J2:2,J3:3};
+  const mIcon={WC:'🏆',J1:'🥇',J2:'🥈',J3:'🥉'};
+  const asc=[...db.rounds].sort((a,b)=>a.date.localeCompare(b.date));
+  const rIdx=asc.findIndex(rr=>rr.id===r.id);
+  const rows=[...r.results].sort((a,b)=>a.rank-b.rank).map(x=>{
+    const cur=x.medal||null;
+    let prev=undefined;
+    for(let i=rIdx-1;i>=0;i--){const pr=asc[i].results.find(p=>p.playerId===x.playerId);if(pr){prev=pr.medal||null;break;}}
+    let badge='';
+    if(prev!==undefined && prev!==cur){
+      if(!prev&&cur) badge=`<span style="font-size:11px;background:#E8F5E9;color:#1B5E20;padding:2px 8px;border-radius:10px;margin-left:6px;">🆕 初獲得</span>`;
+      else if(prev&&!cur) badge=`<span style="font-size:11px;background:#FFEBEE;color:#B71C1C;padding:2px 8px;border-radius:10px;margin-left:6px;">${mIcon[prev]}${prev}→なし</span>`;
+      else{const up=mOrd[cur]<mOrd[prev];badge=`<span style="font-size:11px;background:${up?'#E8F5E9':'#FFEBEE'};color:${up?'#1B5E20':'#B71C1C'};padding:2px 8px;border-radius:10px;margin-left:6px;">${mIcon[prev]}${prev}→${mIcon[cur]}${cur}</span>`;}
+    }
+    return `<div class="result-row">
       <span class="rank-num">${x.rank}</span>${mb(x.medal)}
-      <span class="result-name">${esc(pname(x.playerId))}</span>
+      <span class="result-name" style="flex:1;">${esc(pname(x.playerId))}${badge}</span>
       <span class="result-score">${x.score}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   // ── 組み合わせ表 表示 ──
   const pairings = r.pairings || [];
