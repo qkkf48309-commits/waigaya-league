@@ -191,17 +191,47 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .alert-info  { background: #E3F2FD; color: #1565C0; }
 .alert-warn  { background: #FFF3E0; color: #BF360C; }
 .alert-green { background: #E8F5E9; color: #1B5E20; }
-.notice-head { background: linear-gradient(135deg,#1565C0,#1976D2); color: white; border-radius: 16px; padding: 18px 16px; margin-bottom: 14px; text-align: center; }
-.notice-head-title { font-size: 17px; font-weight: 700; line-height: 1.5; }
-.notice-head-date { font-size: 13px; opacity: 0.9; margin-top: 6px; }
-.notice-sec { background: white; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow); }
-.notice-label { font-size: 13px; font-weight: 700; color: var(--primary-dark); margin-bottom: 7px; }
-.notice-body { font-size: 14px; color: var(--text); line-height: 1.75; word-break: break-word; }
-.notice-group { background: #F5F9FF; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
-.notice-group-hd { font-size: 12px; font-weight: 700; color: #E65100; margin-bottom: 6px; }
-.notice-mem { display: flex; align-items: center; justify-content: space-between; font-size: 14px; padding: 3px 0; }
-.notice-note { font-size: 12px; color: var(--text2); margin-top: 8px; line-height: 1.7; }
-.notice-greet { font-size: 13px; color: var(--text2); line-height: 1.8; margin-bottom: 12px; padding: 0 2px; }
+/* ===== 大会案内（Jリーグ公式風） ===== */
+.notice-wrap { background: #0A1730; min-height: 100vh; padding-bottom: 96px; }
+.notice-topbar { background: linear-gradient(135deg,#0B1E45,#123A7A); border-bottom: 2px solid #C9A227; }
+.notice-hero { position: relative; padding: 30px 18px 24px; text-align: center; overflow: hidden;
+  background: linear-gradient(165deg,#123A7A 0%,#0D2350 55%,#0A1730 100%); border-bottom: 2px solid #C9A227; }
+.notice-hero-img { position: absolute; inset: 0; background-size: cover; background-position: center 68%; opacity: .85; }
+.notice-hero::after { content:''; position:absolute; inset:0; pointer-events:none;
+  background: linear-gradient(180deg, rgba(10,23,48,.50) 0%, rgba(10,23,48,.26) 45%, rgba(10,23,48,.86) 100%),
+              radial-gradient(circle at 50% 0%, rgba(255,255,255,.14), transparent 62%); }
+.notice-hero-in { position: relative; z-index: 1; }
+.notice-kicker { font-size: 10px; letter-spacing: 4px; color: #E3C567; font-weight: 800; }
+.notice-title { font-size: 21px; font-weight: 800; color: #fff; line-height: 1.4; margin: 9px 0 2px; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+.notice-datebig { font-size: 27px; font-weight: 800; color: #fff; letter-spacing: 1.5px; line-height: 1.2; }
+.notice-dow { display: inline-block; background: #C9A227; color: #0A1730; font-size: 11px; font-weight: 800;
+  letter-spacing: 1.5px; border-radius: 4px; padding: 2px 7px; margin-left: 7px; vertical-align: 4px; }
+.notice-venue { font-size: 13px; color: #BFD3F2; margin-top: 8px; line-height: 1.6; }
+.gold-rule { height: 2px; width: 68%; margin: 13px auto 12px; background: linear-gradient(90deg,transparent,#C9A227,transparent); }
+.notice-greet { font-size: 13px; color: #AFC4E6; line-height: 1.9; padding: 16px 20px 4px; text-align: center; }
+.notice-panel { background: #132A52; border: 1px solid rgba(201,162,39,.32); border-radius: 14px; margin: 12px 14px; padding: 14px 16px; }
+.notice-panel-hd { font-size: 11px; letter-spacing: 2.5px; color: #E3C567; font-weight: 800; margin-bottom: 11px; }
+.notice-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,.13); }
+.notice-row:last-child { border-bottom: none; padding-bottom: 0; }
+.notice-row-k { flex: 0 0 62px; color: #8FB0E0; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; padding-top: 3px; }
+.notice-row-v { flex: 1; color: #fff; font-size: 14px; line-height: 1.65; word-break: break-word; }
+.notice-link { color: #E3C567; font-size: 12px; text-decoration: none; border-bottom: 1px solid rgba(227,197,103,.5); }
+.grp { background: #0E2144; border-radius: 12px; border-left: 3px solid #C9A227; margin-bottom: 10px; overflow: hidden; }
+.grp-hd { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,.07); }
+.grp-no { font-size: 11px; font-weight: 800; color: #E3C567; letter-spacing: 2.5px; }
+.grp-time { font-size: 13px; font-weight: 800; color: #fff; letter-spacing: .5px; }
+.grp-p { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 9px 12px; font-size: 15px; color: #fff; border-top: 1px solid rgba(255,255,255,.06); }
+.grp-p:first-of-type { border-top: none; }
+.stake { display: flex; flex-wrap: wrap; gap: 7px; }
+.stake-chip { background: rgba(201,162,39,.14); border: 1px solid rgba(201,162,39,.45); border-radius: 14px;
+  padding: 4px 11px; font-size: 12px; font-weight: 800; color: #F0DFA8; letter-spacing: .5px; }
+.notice-txt { font-size: 14px; line-height: 1.85; color: #DCE6F7; word-break: break-word; }
+.notice-warn { border-color: rgba(255,167,38,.5); background: #2A2040; }
+.notice-warn .notice-panel-hd { color: #FFB74D; }
+.notice-foot { text-align: center; color: #7E97C0; font-size: 12px; margin: 16px 0 4px; letter-spacing: 1px; }
+.btn-gold { background: linear-gradient(135deg,#E9D08A,#C9A227); color: #0A1730; border: none; font-weight: 800; letter-spacing: .5px; }
+.btn-ghost { background: transparent; color: #AFC4E6; border: 1.5px solid rgba(255,255,255,.22); }
 .text-sm { font-size: 13px; color: var(--text2); }
 .text-xs { font-size: 12px; color: var(--text2); }
 .mt10 { margin-top: 10px; }
@@ -736,6 +766,15 @@ function fmtDateJP(s) {
   return `${y}年${m}月${d}日（${wd}）`;
 }
 
+function dateParts(s) {
+  const [y,m,d]=String(s).split('-').map(Number);
+  if (!y||!m||!d) return {jp:s, dot:s, dow:'', en:''};
+  const i=new Date(y,m-1,d).getDay();
+  return { jp:`${y}年${m}月${d}日`, dot:`${y}.${m}.${d}`,
+           dow:['日','月','火','水','木','金','土'][i],
+           en:['SUN','MON','TUE','WED','THU','FRI','SAT'][i] };
+}
+
 function copyText(text, msg) {
   const done=()=>showToast(msg||'📋 コピーしました！');
   if (navigator.clipboard) {
@@ -764,54 +803,87 @@ function noticePairingBlocks() {
 }
 
 function renderNotice() {
-  const hdr=`
-    <div class="header"><div class="header-row">
+  const topbar=`
+    <div class="header notice-topbar"><div class="header-row">
       <button class="btn-back" onclick="go('home')">‹</button>
-      <h1>📢 大会案内</h1>
+      <h1>大会案内</h1>
       <button class="btn-back" onclick="shareNotice()" title="LINE用にコピー">📤</button>
     </div></div>`;
 
   if (!hasNotice()) {
-    return hdr+`<div class="content">
-      <div class="empty-state"><div class="empty-icon">📢</div>
-        <div class="empty-msg">まだ案内が登録されていません</div>
-        <div class="empty-sub">管理者メニューの「大会案内の作成・編集」から登録してください</div>
+    return topbar+`<div class="notice-wrap"><div style="padding:16px 0;">
+      <div class="notice-panel" style="text-align:center;">
+        <div style="font-size:40px;margin-bottom:10px;">📢</div>
+        <div class="notice-txt" style="margin-bottom:6px;">まだ案内が登録されていません</div>
+        <div style="font-size:12px;color:#8FB0E0;line-height:1.7;">管理者メニューの「大会案内の作成・編集」から登録してください</div>
       </div>
-      <button class="btn btn-outline" onclick="go('noticeEdit')">✏️ 案内を作成する</button>
-    </div>`;
+      <div style="padding:0 14px;"><button class="btn btn-gold" onclick="go('noticeEdit')">✒️ 案内を作成する</button></div>
+    </div></div>`;
   }
 
   const n=getNotice();
   const pair=noticePairingBlocks();
-  const sec=(label,body)=> body?`<div class="notice-sec"><div class="notice-label">${label}</div><div class="notice-body">${body}</div></div>`:'';
+  const d=n.date?dateParts(n.date):null;
 
-  const placeBody=[
-    n.place?esc(n.place):'',
-    n.startInfo?esc(n.startInfo):'',
-    n.placeUrl?`<a href="${esc(n.placeUrl)}" target="_blank" rel="noopener" style="color:var(--primary);font-size:13px;">🔗 コースのページを開く</a>`:''
-  ].filter(Boolean).join('<br>');
+  const info=[
+    d?['DATE', `${d.jp}<span style="color:#8FB0E0;font-size:12px;">（${d.dow}）</span>`]:null,
+    n.place?['VENUE', esc(n.place)+(n.placeUrl?`<br><a class="notice-link" href="${esc(n.placeUrl)}" target="_blank" rel="noopener">コースのページを見る ›</a>`:'')]:null,
+    n.startInfo?['START', esc(n.startInfo)]:null,
+    n.fee?['FEE', nl2br(n.fee)]:null
+  ].filter(Boolean).map(function(x){
+    return `<div class="notice-row"><div class="notice-row-k">${x[0]}</div><div class="notice-row-v">${x[1]}</div></div>`;
+  }).join('');
 
-  const pairBody = pair ? pair.html
-    : `<div class="text-xs">組み合わせが決まると自動で表示されます（「新しいラウンド」で組み合わせを一時保存してください）</div>`;
+  let pairPanel='';
+  if (pair) {
+    const groups=pair.nr.pairings.map(function(g,i){
+      const rows=(g.playerIds||[]).map(function(pid){
+        const mi=playerMedalInfo(pid);
+        return `<div class="grp-p"><span>${esc(pname(pid))}</span>${mb(mi.medal,true,mi.frozen)}</div>`;
+      }).join('');
+      return `<div class="grp"><div class="grp-hd"><span class="grp-no">GROUP ${i+1}</span>${g.time?`<span class="grp-time">⏰ ${esc(g.time)}</span>`:''}</div>${rows}</div>`;
+    }).join('');
+    const c=pair.cfg;
+    const chips=[['🏆 WC',1],['🥇 J1',c.j1],['🥈 J2',c.j2],['🥉 J3',c.j3]]
+      .filter(function(x){return x[1]>0;})
+      .map(function(x){return `<span class="stake-chip">${x[0]} ×${x[1]}</span>`;}).join('');
+    pairPanel=`
+      <div class="notice-panel"><div class="notice-panel-hd">PAIRINGS ・ 組合せ</div>${groups}</div>
+      <div class="notice-panel"><div class="notice-panel-hd">MEDALS AT STAKE ・ 今回争うメダル</div>
+        <div class="stake">${chips}</div></div>`;
+  } else {
+    pairPanel=`<div class="notice-panel"><div class="notice-panel-hd">PAIRINGS ・ 組合せ</div>
+      <div class="notice-txt" style="font-size:13px;color:#8FB0E0;">組み合わせが決まるとここに自動で表示されます</div></div>`;
+  }
 
-  return hdr+`
-    <div class="content">
-      <div class="notice-head">
-        <div class="notice-head-title">${esc(n.title||'ワイガヤJリーグ')}<br>のご案内</div>
-        ${n.date?`<div class="notice-head-date">📅 ${fmtDateJP(n.date)}</div>`:''}
+  const panel=function(hd,body,cls){
+    return body?`<div class="notice-panel ${cls||''}"><div class="notice-panel-hd">${hd}</div><div class="notice-txt">${body}</div></div>`:'';
+  };
+
+  return topbar+`
+    <div class="notice-wrap">
+      <div class="notice-hero">
+        <div class="notice-hero-img" style="background-image:url('notice_header.png');"></div>
+        <div class="notice-hero-in">
+          <div class="notice-kicker">WAIGAYA J LEAGUE</div>
+          <div class="notice-title">${esc(n.title||'ワイガヤJリーグ')}</div>
+          <div class="gold-rule"></div>
+          ${d?`<div class="notice-datebig">${d.dot}<span class="notice-dow">${d.en}</span></div>`:''}
+          ${n.place?`<div class="notice-venue">📍 ${esc(n.place)}${n.startInfo?`<br>⏰ ${esc(n.startInfo)}`:''}</div>`:''}
+        </div>
       </div>
       ${n.greeting?`<div class="notice-greet">${nl2br(n.greeting)}</div>`:''}
-      ${sec('■ 日時', n.date?fmtDateJP(n.date):'')}
-      ${sec('■ 場所', placeBody)}
-      ${sec('■ 費用', n.fee?nl2br(n.fee):'')}
-      ${sec('■ 組合せ', pairBody)}
-      ${sec('◆ 競技ルール', n.rules?nl2br(n.rules):'')}
-      ${sec('◆ スコア集計', n.scoring?nl2br(n.scoring):'')}
-      ${sec('◆ 表彰式', n.award?nl2br(n.award):'')}
-      ${sec('⚠️ 注意', n.caution?nl2br(n.caution):'')}
-      ${n.organizer?`<div class="text-xs" style="text-align:right;margin:6px 2px 14px;">幹事：${esc(n.organizer)}</div>`:''}
-      <button class="btn btn-outline" onclick="shareNotice()" style="margin-bottom:10px;">📤 LINE用にコピーする</button>
-      <button class="btn btn-gray" onclick="go('noticeEdit')">✏️ 内容を編集する（管理者）</button>
+      ${info?`<div class="notice-panel"><div class="notice-panel-hd">MATCH INFO ・ 開催情報</div>${info}</div>`:''}
+      ${pairPanel}
+      ${panel('LOCAL RULES ・ 競技ルール', n.rules?nl2br(n.rules):'')}
+      ${panel('SCORING ・ スコア集計', n.scoring?nl2br(n.scoring):'')}
+      ${panel('AWARDS ・ 表彰式', n.award?nl2br(n.award):'')}
+      ${panel('⚠️ NOTICE ・ 注意', n.caution?nl2br(n.caution):'', 'notice-warn')}
+      ${n.organizer?`<div class="notice-foot">ORGANIZED BY — ${esc(n.organizer)}</div>`:''}
+      <div style="padding:6px 14px 0;">
+        <button class="btn btn-gold" onclick="shareNotice()" style="margin-bottom:10px;">📤 LINE用にコピーする</button>
+        <button class="btn btn-ghost" onclick="go('noticeEdit')">✏️ 内容を編集する（管理者）</button>
+      </div>
     </div>`;
 }
 
