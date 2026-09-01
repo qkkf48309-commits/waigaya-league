@@ -191,6 +191,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo'
 .alert-info  { background: #E3F2FD; color: #1565C0; }
 .alert-warn  { background: #FFF3E0; color: #BF360C; }
 .alert-green { background: #E8F5E9; color: #1B5E20; }
+.notice-head { background: linear-gradient(135deg,#1565C0,#1976D2); color: white; border-radius: 16px; padding: 18px 16px; margin-bottom: 14px; text-align: center; }
+.notice-head-title { font-size: 17px; font-weight: 700; line-height: 1.5; }
+.notice-head-date { font-size: 13px; opacity: 0.9; margin-top: 6px; }
+.notice-sec { background: white; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow); }
+.notice-label { font-size: 13px; font-weight: 700; color: var(--primary-dark); margin-bottom: 7px; }
+.notice-body { font-size: 14px; color: var(--text); line-height: 1.75; word-break: break-word; }
+.notice-group { background: #F5F9FF; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.notice-group-hd { font-size: 12px; font-weight: 700; color: #E65100; margin-bottom: 6px; }
+.notice-mem { display: flex; align-items: center; justify-content: space-between; font-size: 14px; padding: 3px 0; }
+.notice-note { font-size: 12px; color: var(--text2); margin-top: 8px; line-height: 1.7; }
+.notice-greet { font-size: 13px; color: var(--text2); line-height: 1.8; margin-bottom: 12px; padding: 0 2px; }
 .text-sm { font-size: 13px; color: var(--text2); }
 .text-xs { font-size: 12px; color: var(--text2); }
 .mt10 { margin-top: 10px; }
@@ -701,6 +712,207 @@ function clearNextEvent() {
 }
 
 // =============================================
+//  SCREEN: NOTICE（大会案内）
+// =============================================
+const NOTICE_DEFAULT = {
+  title:'', date:'', place:'', placeUrl:'', startInfo:'', fee:'',
+  greeting:'お疲れ様です。\n下記のとおりワイガヤJリーグを開催いたします。\n各自、トレーニングに励み、上位リーグ入りを目指して頑張りましょう。',
+  rules:'ローカルルール、ダブルペリア方式（上限なし）、6インチリプレイス、グリーン上ワングリップOK',
+  scoring:'スコア集計はカート画面への登録にて行います。必ず入力をお願いします。',
+  award:'プレー終了後、メダルの発表を行います。',
+  caution:'当日、Jメダルをキャディーバッグに装着の上、ご参加ください。',
+  organizer:''
+};
+const hasNotice = () => !!(db.notice && (db.notice.title || db.notice.date || db.notice.place));
+const getNotice = () => Object.assign({}, NOTICE_DEFAULT, db.notice||{});
+const noticeNr  = () => { const d=loadDraft(); return (d&&d.nr&&d.nr.course)?d.nr:null; };
+const nl2br     = s => esc(s).replace(/\n/g,'<br>');
+
+function fmtDateJP(s) {
+  if (!s) return '';
+  const [y,m,d]=String(s).split('-').map(Number);
+  if (!y||!m||!d) return s;
+  const wd=['日','月','火','水','木','金','土'][new Date(y,m-1,d).getDay()];
+  return `${y}年${m}月${d}日（${wd}）`;
+}
+
+function copyText(text, msg) {
+  const done=()=>showToast(msg||'📋 コピーしました！');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(done).catch(()=>showToast('⚠️ コピーできませんでした'));
+  } else {
+    const ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta); done();
+  }
+}
+
+function noticePairingBlocks() {
+  const nr=noticeNr();
+  if (!nr || !(nr.pairings||[]).length) return null;
+  const groups=nr.pairings.map((g,i)=>{
+    const label=`第${i+1}組${g.time?`　⏰${esc(g.time)}`:''}`;
+    const rows=(g.playerIds||[]).map(pid=>{
+      const info=playerMedalInfo(pid);
+      return `<div class="notice-mem"><span>${esc(pname(pid))}</span>${mb(info.medal,true,info.frozen)}</div>`;
+    }).join('');
+    return `<div class="notice-group"><div class="notice-group-hd">${label}</div>${rows}</div>`;
+  }).join('');
+  const cfg=computeMedalConfig(nr.pIds||[]);
+  const note=`<div class="notice-note">参考：既定メダル枠　🏆WC＝1、🥇J1＝${cfg.j1}、🥈J2＝${cfg.j2}、🥉J3＝${cfg.j3}</div>`;
+  return { html: groups+note, nr, cfg };
+}
+
+function renderNotice() {
+  const hdr=`
+    <div class="header"><div class="header-row">
+      <button class="btn-back" onclick="go('home')">‹</button>
+      <h1>📢 大会案内</h1>
+      <button class="btn-back" onclick="shareNotice()" title="LINE用にコピー">📤</button>
+    </div></div>`;
+
+  if (!hasNotice()) {
+    return hdr+`<div class="content">
+      <div class="empty-state"><div class="empty-icon">📢</div>
+        <div class="empty-msg">まだ案内が登録されていません</div>
+        <div class="empty-sub">管理者メニューの「大会案内の作成・編集」から登録してください</div>
+      </div>
+      <button class="btn btn-outline" onclick="go('noticeEdit')">✏️ 案内を作成する</button>
+    </div>`;
+  }
+
+  const n=getNotice();
+  const pair=noticePairingBlocks();
+  const sec=(label,body)=> body?`<div class="notice-sec"><div class="notice-label">${label}</div><div class="notice-body">${body}</div></div>`:'';
+
+  const placeBody=[
+    n.place?esc(n.place):'',
+    n.startInfo?esc(n.startInfo):'',
+    n.placeUrl?`<a href="${esc(n.placeUrl)}" target="_blank" rel="noopener" style="color:var(--primary);font-size:13px;">🔗 コースのページを開く</a>`:''
+  ].filter(Boolean).join('<br>');
+
+  const pairBody = pair ? pair.html
+    : `<div class="text-xs">組み合わせが決まると自動で表示されます（「新しいラウンド」で組み合わせを一時保存してください）</div>`;
+
+  return hdr+`
+    <div class="content">
+      <div class="notice-head">
+        <div class="notice-head-title">${esc(n.title||'ワイガヤJリーグ')}<br>のご案内</div>
+        ${n.date?`<div class="notice-head-date">📅 ${fmtDateJP(n.date)}</div>`:''}
+      </div>
+      ${n.greeting?`<div class="notice-greet">${nl2br(n.greeting)}</div>`:''}
+      ${sec('■ 日時', n.date?fmtDateJP(n.date):'')}
+      ${sec('■ 場所', placeBody)}
+      ${sec('■ 費用', n.fee?nl2br(n.fee):'')}
+      ${sec('■ 組合せ', pairBody)}
+      ${sec('◆ 競技ルール', n.rules?nl2br(n.rules):'')}
+      ${sec('◆ スコア集計', n.scoring?nl2br(n.scoring):'')}
+      ${sec('◆ 表彰式', n.award?nl2br(n.award):'')}
+      ${sec('⚠️ 注意', n.caution?nl2br(n.caution):'')}
+      ${n.organizer?`<div class="text-xs" style="text-align:right;margin:6px 2px 14px;">幹事：${esc(n.organizer)}</div>`:''}
+      <button class="btn btn-outline" onclick="shareNotice()" style="margin-bottom:10px;">📤 LINE用にコピーする</button>
+      <button class="btn btn-gray" onclick="go('noticeEdit')">✏️ 内容を編集する（管理者）</button>
+    </div>`;
+}
+
+function shareNotice() {
+  if (!hasNotice()) { showToast('⚠️ まだ案内が登録されていません'); return; }
+  const n=getNotice();
+  const pair=noticePairingBlocks();
+  const L=[`⛳ ${n.title||'ワイガヤJリーグ'} のご案内`, '─'.repeat(16)];
+  if (n.greeting) { L.push(n.greeting, ''); }
+  if (n.date)  L.push(`📅 日時：${fmtDateJP(n.date)}`);
+  if (n.place) L.push(`📍 場所：${n.place}`);
+  if (n.startInfo) L.push(`⏰ ${n.startInfo}`);
+  if (n.placeUrl)  L.push(n.placeUrl);
+  if (n.fee)   L.push(`💰 費用：${n.fee}`);
+  if (pair) {
+    L.push('', '🏌️ 組合せ');
+    pair.nr.pairings.forEach((g,i)=>{
+      L.push(`【第${i+1}組${g.time?' '+g.time:''}】`);
+      (g.playerIds||[]).forEach(pid=>{
+        const info=playerMedalInfo(pid);
+        L.push(`　${pname(pid)}${info.medal?'（'+info.medal+'）':''}`);
+      });
+    });
+    L.push(`参考：既定メダル枠 WC=1、J1=${pair.cfg.j1}、J2=${pair.cfg.j2}、J3=${pair.cfg.j3}`);
+  }
+  if (n.rules)   L.push('', `◆競技ルール：${n.rules}`);
+  if (n.scoring) L.push(`◆${n.scoring}`);
+  if (n.award)   L.push(`◆表彰式：${n.award}`);
+  if (n.caution) L.push(`⚠️${n.caution}`);
+  if (n.organizer) L.push('', `幹事：${n.organizer}`);
+  copyText(L.join('\n'), '📋 コピーしました！LINEに貼り付けてください');
+}
+
+function renderNoticeEdit() {
+  // 未登録なら次回大会・入力中ラウンドから初期値を埋める
+  let n=getNotice();
+  if (!hasNotice()) {
+    const nr=noticeNr();
+    n=Object.assign({}, n, {
+      title: db.nextEvent?.title || '',
+      date:  db.nextEvent?.date  || (nr?nr.date:'') || '',
+      place: nr?nr.course:'',
+      startInfo: (nr&&nr.startTime) ? `${nr.startTime} スタート（${(nr.pairings||[]).length||''}組）`.replace('（組）','') : ''
+    });
+  }
+  const row=(id,label,val,ph,rows)=> rows
+    ? `<div class="form-group"><label class="form-label">${label}</label><textarea id="${id}" class="form-input" rows="${rows}" placeholder="${esc(ph)}" style="font-size:14px;line-height:1.6;">${esc(val)}</textarea></div>`
+    : `<div class="form-group"><label class="form-label">${label}</label><input type="text" id="${id}" class="form-input form-input-sm" placeholder="${esc(ph)}" value="${esc(val)}" /></div>`;
+
+  return `
+    <div class="header"><div class="header-row">
+      <button class="btn-back" onclick="go('notice')">‹</button>
+      <h1>✏️ 大会案内の編集</h1><div style="width:40px;"></div>
+    </div></div>
+    <div class="content">
+      <div class="alert alert-info">保存するとクラウド経由でメンバー全員の画面に表示されます。組合せは「新しいラウンド」で作った組み合わせが自動で入ります。</div>
+      <div class="card">
+        <div class="card-title">基本情報</div>
+        ${row('nTitle','大会名',n.title,'例: 第13回 ワイガヤJリーグ（夏の陣）')}
+        <div class="form-group"><label class="form-label">開催日</label>
+          <input type="date" id="nDate" class="form-input form-input-sm" value="${esc(n.date)}" /></div>
+        ${row('nPlace','場所（コース名）',n.place,'例: 三木セブンハンドレッド倶楽部')}
+        ${row('nStart','スタート情報',n.startInfo,'例: OUT 9:23 スタート（4組）')}
+        ${row('nUrl','コースのURL（任意）',n.placeUrl,'https://...')}
+        ${row('nFee','費用',n.fee,'例: プレー費 13,999円（昼食込み）')}
+      </div>
+      <div class="card">
+        <div class="card-title">本文</div>
+        ${row('nGreeting','あいさつ文',n.greeting,'',4)}
+        ${row('nRules','競技ルール',n.rules,'',3)}
+        ${row('nScoring','スコア集計',n.scoring,'',2)}
+        ${row('nAward','表彰式',n.award,'',2)}
+        ${row('nCaution','注意事項',n.caution,'',2)}
+        ${row('nOrganizer','幹事',n.organizer,'例: 吉田・箕作')}
+      </div>
+      <button class="btn btn-primary" onclick="saveNotice()" style="margin-bottom:10px;">💾 保存する</button>
+      ${hasNotice()?`<button class="btn btn-red" onclick="safeAct('delNotice',deleteNotice,'⚠️ もう一度押すと案内を削除します')">🗑️ 案内を削除する</button>`:''}
+    </div>`;
+}
+
+function saveNotice() {
+  const v=id=>document.getElementById(id)?.value.trim()||'';
+  const n={
+    title:v('nTitle'), date:document.getElementById('nDate')?.value||'',
+    place:v('nPlace'), startInfo:v('nStart'), placeUrl:v('nUrl'), fee:v('nFee'),
+    greeting:v('nGreeting'), rules:v('nRules'), scoring:v('nScoring'),
+    award:v('nAward'), caution:v('nCaution'), organizer:v('nOrganizer')
+  };
+  if (!n.title && !n.date && !n.place) { showToast('⚠️ 大会名・日付・場所のどれかは入力してください'); return; }
+  db.notice=n; saveDB(db);
+  showToast('✅ 大会案内を保存しました！');
+  go('notice');
+}
+
+function deleteNotice() {
+  db.notice=null; saveDB(db);
+  showToast('🗑️ 案内を削除しました');
+  go('home');
+}
+
+// =============================================
 //  SCREEN: HOME
 // =============================================
 function buildDraftBanner(nr) {
@@ -808,7 +1020,7 @@ function renderHome() {
     const ev = new Date(ey, em-1, ed);
     const diff = Math.round((ev - today) / (1000*60*60*24));
     if (diff >= 0) countdownBanner = `
-      <div class="countdown-card" onclick="go('admin')" style="cursor:pointer;">
+      <div class="countdown-card" onclick="go('${hasNotice()?'notice':'admin'}')" style="cursor:pointer;">
         <div style="font-size:11px;opacity:0.8;margin-bottom:2px;">⛳ ${db.nextEvent.title?esc(db.nextEvent.title)+' ':'次回大会 '}${db.nextEvent.date.replace(/-/g,'/')}</div>
         <div><span class="countdown-days">${diff}</span><span style="font-size:15px;margin-left:6px;">日後</span></div>
       </div>`;
@@ -836,6 +1048,11 @@ function renderHome() {
           <span class="tile-icon">📊</span>
           <span class="tile-label">成績一覧</span>
         </button>
+        ${hasNotice()?`
+        <button class="tile tile-wide" onclick="go('notice')">
+          <span class="tile-icon">📢</span>
+          <span class="tile-label">大会案内を見る</span>
+        </button>`:''}
       </div>
       <div style="text-align:right;margin-top:-10px;margin-bottom:14px;">
         <button class="btn-admin" onclick="go('admin')">🔐 管理者</button>
@@ -1070,6 +1287,15 @@ function renderHelp() {
 ・<strong>インポート</strong>：バックアップデータを復元`
     },
     {
+      icon:'📢', title:'大会案内',
+      body:`いつもLINEなどで送っている開催案内をアプリ内で表示できます。<br><br>
+・管理者メニュー（パスワード：waigaya）の「大会案内の作成・編集」から登録<br>
+・大会名・日付・場所・スタート時間・費用・ルールなどを入力<br>
+・組合せ欄には「新しいラウンド」で作った組み合わせと保持メダルが自動で入ります<br>
+・保存するとホーム画面に「📢 大会案内を見る」が表示され、全メンバーが確認できます<br>
+・📤ボタンでLINE用のテキストをコピーできます`
+    },
+    {
       icon:'📤', title:'結果のシェア',
       body:`ラウンド詳細画面の右上📤ボタンを押すと、結果テキストがクリップボードにコピーされます。そのままLINEに貼り付けてメンバーと共有できます。`
     },
@@ -1173,6 +1399,9 @@ function renderAdmin() {
           </button>
           <button class="btn btn-outline" onclick="go('backup')" style="justify-content:flex-start;gap:12px;">
             <span style="font-size:20px;">💾</span> データ管理
+          </button>
+          <button class="btn btn-outline" onclick="go('noticeEdit')" style="justify-content:flex-start;gap:12px;">
+            <span style="font-size:20px;">📢</span> 大会案内の作成・編集
           </button>
         </div>
       </div>
@@ -1582,6 +1811,8 @@ function render() {
     case 'editResult': html=renderEditResult(); break;
     case 'player':     html=renderPlayers(); break;
     case 'backup': html=renderBackup(); break;
+    case 'notice':     html=renderNotice(); break;
+    case 'noticeEdit': html=renderNoticeEdit(); break;
     case 'help':   html=renderHelp(); break;
     case 'wizard':   html=renderWizard(); break;
     case 'pairings': html=renderPairingsEditor(); break;
@@ -1612,6 +1843,15 @@ const APP_PASSWORD = 'waigaya';
 function go(screen, id) {
   // 管理者画面はパスワード認証
   if (PROTECTED_SCREENS.includes(screen) && !ui.authed) {
+    const pw = prompt('🔒 管理者パスワードを入力してください');
+    if (pw !== APP_PASSWORD) {
+      if (pw !== null) showToast('⚠️ パスワードが違います');
+      return;
+    }
+    ui.authed = true;
+  }
+  // 大会案内の編集は管理者パスワードが必要
+  if (screen === 'noticeEdit' && !ui.authed) {
     const pw = prompt('🔒 管理者パスワードを入力してください');
     if (pw !== APP_PASSWORD) {
       if (pw !== null) showToast('⚠️ パスワードが違います');
