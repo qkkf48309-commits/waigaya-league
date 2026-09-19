@@ -799,6 +799,18 @@ function dateParts(s) {
            en:['SUN','MON','TUE','WED','THU','FRI','SAT'][i] };
 }
 
+// LINEなどに貼るアプリのURL（公開ページから開いていればそのURL、それ以外は公開先を使う）
+const PUBLISHED_URL = 'https://qkkf48309-commits.github.io/waigaya-league/';
+function appUrl() {
+  try {
+    const h = location.hostname;
+    if (/^https?:$/.test(location.protocol) && h && !/^(localhost|127\.|\[?::1)/.test(h)) {
+      return location.origin + location.pathname.replace(/[^/]*\.html$/, '');
+    }
+  } catch(e) {}
+  return PUBLISHED_URL;
+}
+
 function copyText(text, msg) {
   const done=()=>showToast(msg||'📋 コピーしました！');
   if (navigator.clipboard) {
@@ -940,6 +952,7 @@ function shareNotice() {
   if (n.award)   L.push(`◆表彰式：${n.award}`);
   if (n.caution) L.push(`⚠️${n.caution}`);
   if (n.organizer) L.push('', `幹事：${n.organizer}`);
+  L.push('', '▼ アプリで組合せ・成績を見る', appUrl());
   copyText(L.join('\n'), '📋 コピーしました！LINEに貼り付けてください');
 }
 
