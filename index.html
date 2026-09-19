@@ -726,17 +726,12 @@ function shareResult(rid) {
     `${'─'.repeat(16)}`,
     ...sorted.map(x=>`${x.rank}位　${pname(x.playerId)}　${x.score}打　${mText[x.medal]||''}`),
     `${'─'.repeat(16)}`,
-    `平均スコア: ${avg}打`
+    `平均スコア: ${avg}打`,
+    '',
+    '▼ アプリで詳しい成績を見る',
+    appUrl()
   ];
-  const text=lines.join('\n');
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(()=>showToast('📋 コピーしました！LINEに貼り付けてください'));
-  } else {
-    const ta=document.createElement('textarea');
-    ta.value=text; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
-    showToast('📋 コピーしました！LINEに貼り付けてください');
-  }
+  copyText(lines.join('\n'), '📋 コピーしました！LINEに貼り付けてください');
 }
 
 // =============================================
