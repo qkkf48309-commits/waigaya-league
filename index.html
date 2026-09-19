@@ -737,18 +737,21 @@ function shareResult(rid) {
 // =============================================
 //  NEXT EVENT
 // =============================================
-function saveNextEvent() {
-  const title=document.getElementById('nextEventTitle')?.value.trim()||'';
-  const date=document.getElementById('nextEventDate')?.value||'';
-  if (!date){showToast('⚠️ 日付を入力してください');return;}
-  db.nextEvent={title,date}; saveDB(db);
-  if (fbUrl) fbPush();
-  showToast('✅ 次回大会を登録しました！'); render();
-}
-function clearNextEvent() {
-  db.nextEvent=null; saveDB(db);
-  if (fbUrl) fbPush();
-  render();
+// ラウンドの入力内容を大会案内にも反映する（大会名・日付・場所・スタート情報）
+// あいさつ文・ルール・費用などの文面はそのまま残す
+function syncNoticeFromRound(nr, groupCount) {
+  if (!nr || !nr.date) return false;
+  const n = Object.assign({}, NOTICE_DEFAULT, db.notice || {});
+  if (nr.title) n.title = nr.title;
+  n.date = nr.date;
+  if (nr.course) {
+    if (n.place && n.place !== nr.course) n.placeUrl = ''; // コースが変わったら古いリンクは外す
+    n.place = nr.course;
+  }
+  const gc = groupCount != null ? groupCount : (nr.pairings||[]).length;
+  if (nr.startTime) n.startInfo = nr.startTime + ' スタート' + (gc ? '（' + gc + '組）' : '');
+  db.notice = n;
+  return true;
 }
 
 // =============================================
@@ -952,14 +955,14 @@ function shareNotice() {
 }
 
 function renderNoticeEdit() {
-  // 未登録なら次回大会・入力中ラウンドから初期値を埋める
+  // 未登録なら入力中のラウンドから初期値を埋める
   let n=getNotice();
   if (!hasNotice()) {
     const nr=noticeNr();
     n=Object.assign({}, n, {
-      title: db.nextEvent?.title || '',
-      date:  db.nextEvent?.date  || (nr?nr.date:'') || '',
-      place: nr?nr.course:'',
+      title: (nr && nr.title) || '',
+      date:  (nr && nr.date) || '',
+      place: (nr && nr.course) || '',
       startInfo: (nr&&nr.startTime) ? `${nr.startTime} スタート（${(nr.pairings||[]).length||''}組）`.replace('（組）','') : ''
     });
   }
@@ -1118,17 +1121,20 @@ function renderHome() {
     ? `<div class="home-hero-logo-img"><img src="${logoUrl}" alt="ワイガヤJリーグのロゴ" /></div>`
     : `<div class="home-hero-logo-img">⛳</div>`;
 
-  // 次回大会カウントダウン
+  // 大会案内の開催日からカウントダウンを表示
   let countdownBanner = '';
-  if (db.nextEvent && db.nextEvent.date) {
+  const evDate = db.notice && db.notice.date;
+  if (evDate) {
     const today = new Date(); today.setHours(0,0,0,0);
-    const [ey,em,ed] = db.nextEvent.date.split('-').map(Number);
+    const [ey,em,ed] = evDate.split('-').map(Number);
     const ev = new Date(ey, em-1, ed);
     const diff = Math.round((ev - today) / (1000*60*60*24));
     if (diff >= 0) countdownBanner = `
-      <button type="button" class="countdown-card" onclick="go('${hasNotice()?'notice':'admin'}')">
-        <div style="font-size:11px;opacity:0.8;margin-bottom:2px;">⛳ ${db.nextEvent.title?esc(db.nextEvent.title)+' ':'次回大会 '}${db.nextEvent.date.replace(/-/g,'/')}</div>
-        <div><span class="countdown-days">${diff}</span><span style="font-size:15px;margin-left:6px;">日後</span></div>
+      <button type="button" class="countdown-card" onclick="go('notice')">
+        <div style="font-size:11px;margin-bottom:2px;">⛳ ${db.notice.title?esc(db.notice.title)+' ':'次回大会 '}${evDate.replace(/-/g,'/')}</div>
+        ${diff===0
+          ? `<div style="font-size:26px;font-weight:800;letter-spacing:1px;">本日開催！</div>`
+          : `<div><span class="countdown-days">${diff}</span><span style="font-size:15px;margin-left:6px;">日後</span></div>`}
       </button>`;
   }
 
@@ -1387,7 +1393,7 @@ function renderHelp() {
     {
       icon:'💾', title:'データ管理',
       body:`ホームの「データ管理」からアクセスできます（パスワード：waigaya）。<br><br>
-・<strong>次回大会</strong>：開催日を登録するとホームにカウントダウン表示<br>
+・<strong>大会案内</strong>：開催日を登録するとホームにカウントダウン表示<br>
 ・<strong>ロゴ設定</strong>：ホーム画面のロゴを変更（全端末に共有）<br>
 ・<strong>エクスポート</strong>：CSVやJSONでデータをバックアップ<br>
 ・<strong>インポート</strong>：バックアップデータを復元`
@@ -1395,8 +1401,9 @@ function renderHelp() {
     {
       icon:'📢', title:'大会案内',
       body:`いつもLINEなどで送っている開催案内をアプリ内で表示できます。<br><br>
-・管理者メニュー（パスワード：waigaya）の「大会案内の作成・編集」から登録<br>
-・大会名・日付・場所・スタート時間・費用・ルールなどを入力<br>
+・「新しいラウンド」で大会名・日付・コース・スタート時間を入力すると、案内にも自動で反映されます<br>
+・費用・ルールなどの文面は、管理者メニュー（パスワード：waigaya）の「大会案内の作成・編集」から<br>
+・案内の開催日がホームのカウントダウンになります（当日は「本日開催！」）<br>
 ・組合せ欄には「新しいラウンド」で作った組み合わせと保持メダルが自動で入ります<br>
 ・保存するとホーム画面に「📢 大会案内を見る」が表示され、全メンバーが確認できます<br>
 ・📤ボタンでLINE用のテキストをコピーできます`
@@ -1567,25 +1574,6 @@ function renderBackup() {
              </div>
              <button class="btn btn-primary" onclick="connectCloud()">接続する</button>`
         }
-      </div>
-
-      <!-- 📅 NEXT EVENT -->
-      <div class="card">
-        <h2 class="card-title">📅 次回大会</h2>
-        <div class="form-group">
-          <label class="form-label" for="nextEventTitle">タイトル（任意）</label>
-          <input type="text" id="nextEventTitle" class="form-input form-input-sm"
-            placeholder="例: 第11回ワイガヤJリーグ" value="${esc(db.nextEvent?.title||'')}"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="nextEventDate">開催日</label>
-          <input type="date" id="nextEventDate" class="form-input form-input-sm"
-            value="${db.nextEvent?.date||''}"/>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-primary" onclick="saveNextEvent()">💾 登録する</button>
-          ${db.nextEvent?.date?`<button class="btn btn-gray" onclick="clearNextEvent()">削除</button>`:''}
-        </div>
       </div>
 
       <!-- 🖼 LOGO -->
@@ -2015,6 +2003,11 @@ function w0next() {
   if (!course) { alert('コース名を入力してください'); return; }
   ui.nr.title=title; ui.nr.date=date; ui.nr.course=course; ui.nr.startTime=startTime;
   ui.step=1; render();
+  // 大会案内の重複する項目（大会名・日付・場所・スタート）にも反映
+  if (syncNoticeFromRound(ui.nr)) {
+    saveDB(db);
+    showToast('✅ 大会案内にも反映しました');
+  }
 }
 function toggle(pid) {
   const ids=ui.nr.pIds, i=ids.indexOf(pid);
@@ -2213,6 +2206,7 @@ function savePairings() {
     // ウィザードモード：ui.nr に保存してステップ1に戻る
     ui.nr.pairings = saved;
     ui.screen = 'wizard'; render();
+    syncNoticeFromRound(ui.nr, saved.length); // 案内のスタート情報に組数を反映
     // Firebaseに即共有
     saveDraft(ui.nr, ui.step);
     if (fbUrl) fbPush(true);
